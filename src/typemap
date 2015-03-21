@@ -1,0 +1,45 @@
+TYPEMAP
+pzk_t*  T_PZK_O
+pzk_dequeue_t*    T_PZK_CHANNEL_O
+watcher_fn        T_ZK_PTR
+clientid_t*       T_ZK_PTR
+const clientid_t* T_ZK_PTR
+
+INPUT
+T_PZK_O
+    if (!SvROK($arg) || !(SvTYPE(SvRV($arg)) == SVt_PVHV))
+        Perl_croak(aTHX_ \"$var is not a blessed reference of type ZooKeeper\");
+    SV* tied_hash = SvRV($arg);
+    MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
+    if (!ext_magic) Perl_croak(aTHX_ \"$var has not been initialized by ZooKeeper\");
+    $var = ($type) ext_magic->mg_ptr;
+
+T_PZK_CHANNEL_O
+    if (!SvROK($arg) || !(SvTYPE(SvRV($arg)) == SVt_PVHV))
+        Perl_croak(aTHX_ \"$var is not a blessed reference of type ZooKeeper::Channel\");
+    SV* tied_hash = SvRV($arg);
+    MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
+    if (!ext_magic) Perl_croak(aTHX_ \"$var has not been initialized by ZooKeeper::Channel\");
+    $var = ($type) ext_magic->mg_ptr;
+
+T_ZK_PTR
+    $var = INT2PTR ($type, SvIVX (SvRV ($arg)))
+
+
+OUTPUT
+T_PZK_O
+    HV* stash = gv_stashpv(\"ZooKeeper\", GV_ADDWARN);
+    SV* attr_hash = (SV*) newHV();
+    sv_magic(attr_hash, Nullsv, PERL_MAGIC_ext,
+                     (const char*) $var, 0);
+    $arg = sv_bless(sv_2mortal(newRV_noinc(attr_hash)), stash);
+
+T_PZK_CHANNEL_O
+    HV* stash = gv_stashpv(\"ZooKeeper::Channel\", GV_ADDWARN);
+    SV* attr_hash = (SV*) newHV();
+    sv_magic(attr_hash, Nullsv, PERL_MAGIC_ext,
+                     (const char*) $var, 0);
+    $arg = sv_bless(sv_2mortal(newRV_noinc(attr_hash)), stash);
+
+T_ZK_PTR
+    $arg = newRV_noinc( newSViv( PTR2IV($var)));
