@@ -6,13 +6,11 @@
 
 #include <pzk.h>
 #include <pzk_dequeue.h>
+#include <pzk_watcher.h>
 #include <zookeeper/zookeeper.h>
 
-static void my_watcher(zhandle_t *zh, int type,
-        int state, const char *path,void *watcherCtx)
-{
+#define ZOO_LOG_LEVEL_OFF 0
 
-}
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper 
 
@@ -32,6 +30,7 @@ _xs_init(self, host, fn=NULL, recv_timeout, clientid=NULL, context=NULL, flags=0
 
             sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
         }
+
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Channel
 
@@ -66,3 +65,21 @@ recv(pzk_dequeue_t* channel)
         RETVAL = element;
     OUTPUT:
         RETVAL
+
+
+MODULE = ZooKeeper PACKAGE = ZooKeeper::Watcher
+
+static void
+_xs_init(SV* self, SV* cb)
+    PPCODE:
+        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
+            pzk_watcher_t* watcher = new_pzk_watcher((void*) cb);
+            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) watcher, 0);
+        }
+
+void
+DESTROY(pzk_watcher_t* watcher)
+    PPCODE:
+        destroy_pzk_watcher(watcher);
+        XSRETURN_YES;
+
