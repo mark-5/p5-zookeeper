@@ -16,8 +16,14 @@ void pzk_watcher_cb(
     const char* path,
     void*       watcherCtx
 ) {
-    pzk_watcher_t* watcher     = (void*) watcherCtx;
+    pzk_watcher_t* watcher     = (pzk_watcher_t*) watcherCtx;
     pzk_watcher_event_t* event = new_pzk_watcher_event(type, state, path, watcher->arg);
+    pzk_dequeue_push(watcher->channel, (void*) event);
+}
+
+void pzk_watcher_auth_cb(int ret, const void* data) {
+    pzk_watcher_t* watcher = (pzk_watcher_t*) data;
+    pzk_watcher_event_t* event = new_pzk_watcher_event(-1, ret, NULL, watcher->arg);
     pzk_dequeue_push(watcher->channel, (void*) event);
 }
 

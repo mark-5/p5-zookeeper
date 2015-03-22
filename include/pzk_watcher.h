@@ -23,6 +23,8 @@ void pzk_watcher_cb(
     void*       watcherCtx
 );
 
+void pzk_watcher_auth_cb(int ret, const void* data);
+
 pzk_watcher_t* new_pzk_watcher(void*);
 void destroy_pzk_watcher(pzk_watcher_t*);
 

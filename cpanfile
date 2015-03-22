@@ -3,6 +3,7 @@ configure_requires 'Module::Install::CPANfile';
 configure_requires 'Module::Install::XSUtil';
 
 requires 'Carp';
+requires 'Digest::SHA';
 requires 'Moo';
 requires 'XSLoader';
 

@@ -1,6 +1,26 @@
 #ifndef PZK_XS_UTILS_H_
 #define PZK_XS_UTILS_H_
 
+void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg) {
+    if (SvROK(obj_sv) && (SvTYPE(SvRV(obj_sv)) == SVt_PVHV)) {
+        SV* tied_hash = SvRV(obj_sv);
+        MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
+        if (!ext_magic) Perl_croak(aTHX_ "%s has not been initialized by %s", var, pkg);
+        return (void*) ext_magic->mg_ptr;
+    } else if (!SvOK(obj_sv)) {
+        return NULL;
+    } else {
+        Perl_croak(aTHX_ "%s is not a blessed reference of type %s", var, pkg);
+    }
+}
+
+SV* ptr_to_tied_object(pTHX_ void* ptr, const char* pkg) {
+    HV* stash = gv_stashpv(pkg, GV_ADDWARN);
+    SV* attr_hash = (SV*) newHV();
+    sv_magic(attr_hash, Nullsv, PERL_MAGIC_ext, (const char*) ptr, 0);
+    return sv_bless(newRV_noinc(attr_hash), stash);
+}
+
 struct ACL* sv_to_acl_entry(pTHX_ SV* acl_sv) {
     if (!SvROK(acl_sv) || !(SvRV(acl_sv)) == SVt_PVHV)
         Perl_croak(aTHX_ "acl entry must be a hash ref");
@@ -32,6 +52,7 @@ struct ACL_vector* sv_to_acl_vector(pTHX_ SV* acl_v_sv) {
         SV* acl_sv = *(av_fetch(acl_v_av, i, 0));
         v->data[i] = *(sv_to_acl_entry(aTHX_ acl_sv));
     }
+    v->count = length;
 
     return v;
 }
@@ -57,5 +78,24 @@ SV* acl_vector_to_sv(pTHX_ struct ACL_vector* acl_v) {
 
     return newRV_noinc((SV*) acl_v_av);
 }
+
+SV* stat_to_sv(pTHX_ struct Stat* stat) {
+    HV* stat_hv = newHV();
+
+    hv_store(stat_hv, "czxid", 5 , newSViv(stat->czxid), 0);
+    hv_store(stat_hv, "mzxid", 5 , newSViv(stat->mzxid), 0);
+    hv_store(stat_hv, "ctime", 5 , newSViv(stat->ctime), 0);
+    hv_store(stat_hv, "mtime", 5 , newSViv(stat->mtime), 0);
+    hv_store(stat_hv, "version", 7, newSViv(stat->mtime), 0);
+    hv_store(stat_hv, "cversion", 8, newSViv(stat->mtime), 0);
+    hv_store(stat_hv, "aversion", 8, newSViv(stat->mtime), 0);
+    hv_store(stat_hv, "ephemeralOwner", 14, newSViv(stat->ephemeralOwner), 0);
+    hv_store(stat_hv, "dataLength", 10, newSViv(stat->dataLength), 0);
+    hv_store(stat_hv, "numChildren", 11, newSViv(stat->numChildren), 0);
+    hv_store(stat_hv, "pzxid", 5, newSViv(stat->pzxid), 0);
+
+    return newRV_noinc((SV*) stat_hv);
+}
+
 
 #endif // ifndef PZK_XS_UTILS_H_

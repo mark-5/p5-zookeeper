@@ -2,63 +2,42 @@ TYPEMAP
 pzk_t*             T_PZK_O
 pzk_dequeue_t*     T_PZK_CHANNEL_O
 pzk_watcher_t*     T_PZK_WATCHER_O
-watcher_fn         T_ZK_PTR
-clientid_t*        T_ZK_PTR
 const clientid_t*  T_ZK_PTR
 struct ACL_vector* T_ZK_ACL_VECTOR
 
 INPUT
 T_PZK_O
-    if (!SvROK($arg) || !(SvTYPE(SvRV($arg)) == SVt_PVHV))
-        Perl_croak(aTHX_ \"$var is not a blessed reference of type ZooKeeper\");
-    SV* tied_hash = SvRV($arg);
-    MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
-    if (!ext_magic) Perl_croak(aTHX_ \"$var has not been initialized by ZooKeeper\");
-    $var = ($type) ext_magic->mg_ptr;
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper\");
 
 T_PZK_CHANNEL_O
-    if (!SvROK($arg) || !(SvTYPE(SvRV($arg)) == SVt_PVHV))
-        Perl_croak(aTHX_ \"$var is not a blessed reference of type ZooKeeper::Channel\");
-    SV* tied_hash = SvRV($arg);
-    MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
-    if (!ext_magic) Perl_croak(aTHX_ \"$var has not been initialized by ZooKeeper::Channel\");
-    $var = ($type) ext_magic->mg_ptr;
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Channel\");
 
 T_PZK_WATCHER_O
-    if (!SvROK($arg) || !(SvTYPE(SvRV($arg)) == SVt_PVHV))
-        Perl_croak(aTHX_ \"$var is not a blessed reference of type ZooKeeper::Watcher\");
-    SV* tied_hash = SvRV($arg);
-    MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
-    if (!ext_magic) Perl_croak(aTHX_ \"$var has not been initialized by ZooKeeper::Watcher\");
-    $var = ($type) ext_magic->mg_ptr;
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Watcher\");
 
 T_ZK_PTR
-    $var = INT2PTR ($type, SvIVX (SvRV ($arg)))
+    if (SvOK($arg)) {
+        $var = INT2PTR ($type, SvIVX (SvRV ($arg)));
+    } else {
+        $var = NULL;
+    }
 
 T_ZK_ACL_VECTOR
-    $var = sv_to_acl_vector($arg)
+    if (SvOK($arg)) {
+        $var = sv_to_acl_vector($arg);
+    } else {
+        $var = NULL;
+    }
 
 OUTPUT
 T_PZK_O
-    HV* stash = gv_stashpv(\"ZooKeeper\", GV_ADDWARN);
-    SV* attr_hash = (SV*) newHV();
-    sv_magic(attr_hash, Nullsv, PERL_MAGIC_ext,
-                     (const char*) $var, 0);
-    $arg = sv_bless(sv_2mortal(newRV_noinc(attr_hash)), stash);
+    $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper\");
 
 T_PZK_CHANNEL_O
-    HV* stash = gv_stashpv(\"ZooKeeper::Channel\", GV_ADDWARN);
-    SV* attr_hash = (SV*) newHV();
-    sv_magic(attr_hash, Nullsv, PERL_MAGIC_ext,
-                     (const char*) $var, 0);
-    $arg = sv_bless(sv_2mortal(newRV_noinc(attr_hash)), stash);
+    $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Channel\");
 
 T_PZK_WATCHER_O
-    HV* stash = gv_stashpv(\"ZooKeeper::Watcher\", GV_ADDWARN);
-    SV* attr_hash = (SV*) newHV();
-    sv_magic(attr_hash, Nullsv, PERL_MAGIC_ext,
-                     (const char*) $var, 0);
-    $arg = sv_bless(sv_2mortal(newRV_noinc(attr_hash)), stash);
+    $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Watcher\");
 
 T_ZK_PTR
     $arg = newRV_noinc( newSViv( PTR2IV($var)));
