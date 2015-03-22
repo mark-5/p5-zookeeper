@@ -7,6 +7,7 @@
 #include <pzk.h>
 #include <pzk_dequeue.h>
 #include <pzk_watcher.h>
+#include <pzk_xs_utils.h>
 #include <zookeeper/zookeeper.h>
 
 #define ZOO_LOG_LEVEL_OFF 0
@@ -82,4 +83,31 @@ DESTROY(pzk_watcher_t* watcher)
     PPCODE:
         destroy_pzk_watcher(watcher);
         XSRETURN_YES;
+
+
+MODULE = ZooKeeper PACKAGE = ZooKeeper::ACL
+
+static struct ACL_vector*
+ZOO_OPEN_ACL_UNSAFE(...)
+    PROTOTYPE:
+    CODE:
+        RETVAL = &ZOO_OPEN_ACL_UNSAFE;
+    OUTPUT:
+        RETVAL
+
+static struct ACL_vector*
+ZOO_READ_ACL_UNSAFE(...)
+    PROTOTYPE:
+    CODE:
+        RETVAL = &ZOO_READ_ACL_UNSAFE;
+    OUTPUT:
+        RETVAL
+
+static struct ACL_vector*
+ZOO_CREATOR_ALL_ACL(...)
+    PROTOTYPE:
+    CODE:
+        RETVAL = &ZOO_CREATOR_ALL_ACL;
+    OUTPUT:
+        RETVAL
 
