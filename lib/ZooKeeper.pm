@@ -1,6 +1,5 @@
 package ZooKeeper;
 use ZooKeeper::XS;
-use ZooKeeper::Watcher;
 use Digest::SHA qw(sha1_base64);
 use Carp;
 use Moo;
@@ -26,16 +25,36 @@ has authentication => (
     is => 'ro',
 );
 
-has watchers => (
-    is       => 'ro',
-    init_arg => undef,
-    default  => sub { {} },
-);
-
 has buffer_length => (
     is      => 'ro',
     default => 2048,
 );
+
+has dispatcher_type => (
+    is       => 'ro',
+    init_arg => 'dispatcher',
+    default  => 'AnyEvent',
+);
+
+has dispatcher => (
+    is       => 'rw',
+    init_arg => undef,
+    handles  => [qw(create_watcher wait)],
+);
+
+sub _build_dispatcher {
+    my ($self) = @_;
+    my $type  = lc $self->dispatcher_type;
+    my $class = $type eq 'anyevent'  ? 'ZooKeeper::Dispatcher::AnyEvent'
+              : $type eq 'interrupt' ? 'ZooKeeper::Dispatcher::Interrupt'
+              : croak "Unrecognized dispatcher type: $type";
+
+    unless (eval "require $class; 1") {
+        croak "Could not require dispatcher class $class: $@";
+    }
+
+    return $class->new;
+}
 
 sub _parse_host {
     my ($self, $host) = @_;
@@ -53,15 +72,17 @@ sub BUILDARGS {
     push @hosts, map {$class->_parse_host($_)} @{delete($args{hosts})||[]};
     $args{hosts} = \@hosts;
 
-    $args{watcher} &&= ZooKeeper::Watcher->new(cb => $args{watcher});
-
     return \%args;
 }
 
 sub BUILD {
     my ($self, $args) = @_;
+    $self->dispatcher($self->_build_dispatcher);
+    my $default_watcher = $self->watcher ? $self->create_watcher('' => $self->watcher, type => 'default') : undef;
+
     my $hosts = join ',', @{$self->hosts||[]};
-    $self->_xs_init($hosts, $self->timeout, $self->watcher, $args->{client_id});
+    $self->_xs_init($hosts, $self->timeout, $default_watcher, $args->{client_id});
+
     $self->add_auth(%{$self->authentication}) if $self->authentication;
 }
 
@@ -83,28 +104,19 @@ around delete => sub {
 
 around exists => sub {
     my ($orig, $self, $path, %extra) = @_;
-    my $watcher; if (my $cb = $extra{watcher}) {
-        $watcher = ZooKeeper::Watcher->new(cb => $cb);
-        $self->watchers->{$path}{exists}{$watcher} = $watcher;
-    }
+    my $watcher = $extra{watcher} ? $self->create_watcher($path, $extra{watcher}, type => 'exists') : undef;
     return $self->$orig($path, $watcher);
 };
 
 around get_children => sub {
     my ($orig, $self, $path, %extra) = @_;
-    my $watcher; if (my $cb = $extra{watcher}) {
-        $watcher = ZooKeeper::Watcher->new(cb => $cb);
-        $self->watchers->{$path}{get_children}{$watcher} = $watcher;
-    }
+    my $watcher = $extra{watcher} ? $self->create_watcher($path, $extra{watcher}, type => 'get_children') : undef;
     return $self->$orig($path, $watcher);
 };
 
 around get => sub {
     my ($orig, $self, $path, %extra) = @_;
-    my $watcher; if (my $cb = $extra{watcher}) {
-        $watcher = ZooKeeper::Watcher->new(cb => $cb);
-        $self->watchers->{$path}{get}{$watcher} = $watcher;
-    }
+    my $watcher = $extra{watcher} ? $self->create_watcher($path, $extra{watcher}, type => 'get') : undef;
     return $self->$orig($path, $extra{buffer_length}//$self->buffer_length, $watcher);
 };
 

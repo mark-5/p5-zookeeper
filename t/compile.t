@@ -6,6 +6,10 @@ use_ok($_) for qw(
     ZooKeeper
     ZooKeeper::ACL
     ZooKeeper::Channel
+    ZooKeeper::Dispatcher
+    ZooKeeper::Dispatcher::Pipe
+    ZooKeeper::Dispatcher::AnyEvent
+    ZooKeeper::Dispatcher::Interrupt
     ZooKeeper::Watcher
 );
 

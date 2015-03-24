@@ -8,7 +8,8 @@
 
 #include <pzk.h>
 #include <pzk_dequeue.h>
-#include <pzk_watcher.h>
+#include <pzk_pipe_dispatcher.h>
+#include <pzk_interrupt_dispatcher.h>
 #include <pzk_xs_utils.h>
 #include <zookeeper/zookeeper.h>
 
@@ -31,7 +32,7 @@ _xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
         int               flags
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            watcher_fn cb = watcher ? pzk_watcher_cb : NULL;
+            watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
             zhandle_t* handle = zookeeper_init(host, cb, recv_timeout, clientid, (void*) watcher, flags);
             pzk_t* pzk = new_pzk(handle);
 
@@ -41,7 +42,7 @@ _xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
 int
 add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, pzk_watcher_t* watcher=NULL)
     CODE:
-        void_completion_t cb = watcher ? pzk_watcher_auth_cb : NULL;
+        void_completion_t cb = watcher ? pzk_dispatcher_auth_cb : NULL;
         RETVAL = zoo_add_auth(pzk->handle, scheme, credential, strlen(credential), cb, (void*) watcher);
     OUTPUT:
         RETVAL
@@ -70,7 +71,7 @@ exists(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
         int rc;
         struct Stat stat; Zero(&stat, 1, struct Stat);
         if (watcher) {
-            rc = zoo_wexists(pzk->handle, path, pzk_watcher_cb, (void*) watcher, &stat);
+            rc = zoo_wexists(pzk->handle, path, pzk_dispatcher_cb, (void*) watcher, &stat);
         } else {
             rc = zoo_exists(pzk->handle, path, 0, &stat);
         }
@@ -84,7 +85,7 @@ get_children(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
         int rc;
         struct String_vector strings; Zero(&strings, 1, struct String_vector);
         if (watcher) {
-            rc = zoo_wget_children(pzk->handle, path, pzk_watcher_cb, (void*) watcher, &strings);
+            rc = zoo_wget_children(pzk->handle, path, pzk_dispatcher_cb, (void*) watcher, &strings);
         } else {
             rc = zoo_get_children(pzk->handle, path, 0, &strings);
         }
@@ -106,7 +107,7 @@ get(pzk_t* pzk, char* path, int buffer_len, pzk_watcher_t* watcher=NULL)
         char* buffer; Newxz(buffer, buffer_len + 1, char);
         struct Stat stat; Zero(&stat, 1, struct Stat);
         if (watcher) {
-            rc = zoo_wget(pzk->handle, path, pzk_watcher_cb, watcher, buffer, &buffer_len, &stat);
+            rc = zoo_wget(pzk->handle, path, pzk_dispatcher_cb, watcher, buffer, &buffer_len, &stat);
         } else {
             rc = zoo_get(pzk->handle, path, 0, buffer, &buffer_len, &stat);
         }
@@ -201,20 +202,91 @@ recv(pzk_dequeue_t* channel)
         RETVAL
 
 
+MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher
+
+SV*
+recv_event(pzk_dispatcher_t* dispatcher)
+    CODE:
+        if (!dispatcher->channel->length) XSRETURN_EMPTY;
+        pzk_event_t* event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel);
+        RETVAL = event ? event_to_sv(aTHX_ event) : &PL_sv_undef;
+        if (event) destroy_pzk_event(event);
+    OUTPUT:
+        RETVAL
+
+int
+send_event(pzk_dispatcher_t* dispatcher, SV* event_sv)
+    CODE:
+        pzk_event_t* event = sv_to_event(aTHX_ event_sv);
+        RETVAL = pzk_dequeue_push(dispatcher->channel, event) == 0;
+    OUTPUT:
+        RETVAL
+
+
+MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher::Pipe
+
+static void
+_xs_init(SV* self, pzk_dequeue_t* channel)
+    PPCODE:
+        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
+            pzk_pipe_dispatcher_t* dispatcher = new_pzk_pipe_dispatcher(channel);
+            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) dispatcher, 0);
+        }
+
+int
+fd(pzk_pipe_dispatcher_t* dispatcher)
+    CODE:
+        RETVAL = dispatcher->fd[0];
+    OUTPUT:
+        RETVAL
+
+int
+read_pipe(pzk_pipe_dispatcher_t* dispatcher)
+    CODE:
+        RETVAL = dispatcher->read_pipe(dispatcher);
+    OUTPUT:
+        RETVAL
+
+void
+DESTROY(pzk_pipe_dispatcher_t* dispatcher)
+    PPCODE:
+        destroy_pzk_pipe_dispatcher(dispatcher);
+        XSRETURN_YES;
+
+
+MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher::Interrupt
+
+static void
+_xs_init(SV* self, pzk_dequeue_t* channel, interrupt_fn func, void* arg)
+    PPCODE:
+        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
+            pzk_interrupt_dispatcher_t* dispatcher = new_pzk_interrupt_dispatcher(channel, func, arg);
+            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) dispatcher, 0);
+        }
+
+void
+DESTROY(pzk_interrupt_dispatcher_t* dispatcher)
+    PPCODE:
+        destroy_pzk_interrupt_dispatcher(dispatcher);
+        XSRETURN_YES;
+
+
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Watcher
 
 static void
-_xs_init(SV* self, SV* cb)
+_xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            pzk_watcher_t* watcher = new_pzk_watcher((void*) cb);
+            pzk_watcher_t* watcher; Newxz(watcher, 1, pzk_watcher_t);
+            watcher->dispatcher = dispatcher;
+            watcher->event_ctx  = (void*) SvREFCNT_inc(cb);
             sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) watcher, 0);
         }
 
 void
 DESTROY(pzk_watcher_t* watcher)
     PPCODE:
-        destroy_pzk_watcher(watcher);
+        Safefree(watcher);
         XSRETURN_YES;
 
 

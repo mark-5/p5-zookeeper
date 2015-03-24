@@ -97,5 +97,35 @@ SV* stat_to_sv(pTHX_ struct Stat* stat) {
     return newRV_noinc((SV*) stat_hv);
 }
 
+SV* event_to_sv(pTHX_ pzk_event_t* event) {
+    HV* event_hv = newHV();
+
+    hv_store(event_hv, "type", 4, newSViv(event->type), 0);
+    hv_store(event_hv, "state", 5, newSViv(event->state), 0);
+    hv_store(event_hv, "path", 4, newSVpv(event->path, 0), 0);
+    hv_store(event_hv, "cb", 2, SvREFCNT_inc((SV*) event->arg), 0);
+
+    return newRV_noinc((SV*) event_hv);
+}
+
+pzk_event_t* sv_to_event(pTHX_ SV* event_sv) {
+    if (!SvROK(event_sv) || !(SvRV(event_sv)) == SVt_PVHV)
+        Perl_croak(aTHX_ "entry entry must be a hash ref");
+    HV* event_hv = (HV*) SvRV(event_sv);
+
+    SV** type_val_ptr; type_val_ptr = hv_fetch(event_hv, "type", 4, 0);
+    int type = type_val_ptr ? SvIV(*type_val_ptr) : -1;
+
+    SV** state_val_ptr; state_val_ptr = hv_fetch(event_hv, "state", 5, 0);
+    int state = state_val_ptr ? SvIV(*state_val_ptr) : -1;
+
+    SV** path_val_ptr; path_val_ptr = hv_fetch(event_hv, "path", 4, 0);
+    char* path = path_val_ptr ? SvPV_nolen(*path_val_ptr) : NULL;
+
+    SV** cb_val_ptr; cb_val_ptr = hv_fetch(event_hv, "cb", 2, 0);
+    void* cb = cb_val_ptr ? (void*) *cb_val_ptr : NULL;
+
+    return new_pzk_event(type, state, path, cb);
+}
 
 #endif // ifndef PZK_XS_UTILS_H_

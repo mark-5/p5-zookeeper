@@ -3,7 +3,11 @@ pzk_t*             T_PZK_O
 pzk_dequeue_t*     T_PZK_CHANNEL_O
 pzk_watcher_t*     T_PZK_WATCHER_O
 const clientid_t*  T_ZK_PTR
+interrupt_fn       T_ZK_PTR
 struct ACL_vector* T_ZK_ACL_VECTOR
+pzk_dispatcher_t*  T_PZK_DISPATCHER_O
+pzk_pipe_dispatcher_t* T_PZK_PIPE_O
+pzk_interrupt_dispatcher_t* T_PZK_INTERRUPT_O
 
 INPUT
 T_PZK_O
@@ -15,9 +19,18 @@ T_PZK_CHANNEL_O
 T_PZK_WATCHER_O
     $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Watcher\");
 
+T_PZK_DISPATCHER_O
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher\");
+
+T_PZK_PIPE_O
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher::Pipe\");
+
+T_PZK_INTERRUPT_O
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher::Interrupt\");
+
 T_ZK_PTR
     if (SvOK($arg)) {
-        $var = INT2PTR ($type, SvIVX (SvRV ($arg)));
+        $var = INT2PTR ($type, SvIV ($arg));
     } else {
         $var = NULL;
     }
@@ -29,6 +42,7 @@ T_ZK_ACL_VECTOR
         $var = NULL;
     }
 
+
 OUTPUT
 T_PZK_O
     $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper\");
@@ -38,6 +52,15 @@ T_PZK_CHANNEL_O
 
 T_PZK_WATCHER_O
     $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Watcher\");
+
+T_PZK_DISPATCHER_O
+    $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Dispatcher\");
+
+T_PZK_PIPE_O
+    $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Dispatcher::Pipe\");
+
+T_PZK_INTERRUPT_O
+    $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Dispatcher::Interrupt\");
 
 T_ZK_PTR
     $arg = newRV_noinc( newSViv( PTR2IV($var)));
