@@ -1,5 +1,6 @@
 package ZooKeeper::Dispatcher::AnyEvent;
 use AnyEvent;
+use Scalar::Util qw(weaken);
 use Moo;
 extends 'ZooKeeper::Dispatcher::Pipe';
 
@@ -19,6 +20,8 @@ around dispatch_event => sub {
 
 sub setup_ae_watcher {
     my ($self) = @_;
+    weaken($self);
+
     my $w = AnyEvent->io(
         fh   => $self->fd,
         poll => 'r',

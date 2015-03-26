@@ -39,6 +39,12 @@ _xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
             sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
         }
 
+void
+DESTROY(pzk_t* pzk)
+    PPCODE:
+        zookeeper_close(pzk->handle);
+        destroy_pzk(pzk);
+
 int
 add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, pzk_watcher_t* watcher=NULL)
     CODE:
@@ -286,6 +292,7 @@ _xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
 void
 DESTROY(pzk_watcher_t* watcher)
     PPCODE:
+        SvREFCNT_dec(watcher->event_ctx);
         Safefree(watcher);
         XSRETURN_YES;
 

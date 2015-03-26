@@ -3,6 +3,7 @@ use ZooKeeper::XS;
 use ZooKeeper::Channel;
 use ZooKeeper::Watcher;
 use AnyEvent;
+use Scalar::Util qw(weaken);
 use Moo;
 
 has channel => (
@@ -20,6 +21,7 @@ has dispatch_cb => (
     is      => 'rw',
     default => sub {
         my ($self) = @_;
+        weaken($self);
         return sub { $self->dispatch_event };
     },
 );
@@ -27,8 +29,19 @@ has dispatch_cb => (
 sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
-    my $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $cb);
-    return $self->watchers->{$path}{$type}{$watcher} = $watcher;
+
+    my $watcher;
+    my $store = $self->watchers->{$path}{$type} ||= {};
+
+    my $wrapped = sub {
+        delete $store->{$watcher} unless $type eq 'default';
+        weaken($store);
+        weaken($watcher);
+        goto &$cb;
+    };
+
+    $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
+    return $store->{$watcher} = $watcher;
 }
 
 sub dispatch_event {
@@ -44,14 +57,14 @@ sub dispatch_event {
 
 sub wait {
     my ($self) = @_;
-    my $cv = AnyEvent->condvar;
+    weaken($self);
 
-    my $event;
+    my $cv = AnyEvent->condvar;
     $self->dispatch_cb(sub {
-        $event = $self->dispatch_event;
-        $cv->send;
+        my $event = $self->dispatch_event;
+        $cv->send($event);
     });
-    $cv->recv;
+    my $event = $cv->recv;
 
     $self->dispatch_cb(sub { $self->dispatch_event });
     return $event;

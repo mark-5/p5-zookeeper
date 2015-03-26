@@ -2,6 +2,7 @@ package ZooKeeper::Dispatcher::Interrupt;
 use ZooKeeper::XS;
 use AnyEvent;
 use Async::Interrupt;
+use Scalar::Util qw(weaken);
 use Moo;
 extends 'ZooKeeper::Dispatcher';
 
@@ -12,6 +13,7 @@ has interrupt => (
 
 sub _build_interrupt {
     my ($self) = @_;
+    weaken($self);
     return Async::Interrupt->new(cb => sub { $self->dispatch_cb->() });
 }
 

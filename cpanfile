@@ -7,6 +7,7 @@ requires 'Async::Interrupt';
 requires 'Carp';
 requires 'Digest::SHA';
 requires 'Moo';
+requires 'Scalar::Util';
 requires 'XSLoader';
 
 test_requires 'Test::More';
