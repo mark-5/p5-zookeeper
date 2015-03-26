@@ -297,29 +297,64 @@ DESTROY(pzk_watcher_t* watcher)
         XSRETURN_YES;
 
 
-MODULE = ZooKeeper PACKAGE = ZooKeeper::ACL
+MODULE = ZooKeeper PACKAGE = ZooKeeper::Constants
 
-static struct ACL_vector*
-ZOO_OPEN_ACL_UNSAFE(...)
-    PROTOTYPE:
-    CODE:
-        RETVAL = &ZOO_OPEN_ACL_UNSAFE;
-    OUTPUT:
-        RETVAL
+BOOT:
+{
+    HV* stash = gv_stashpv("ZooKeeper::Constants", GV_ADDWARN);
 
-static struct ACL_vector*
-ZOO_READ_ACL_UNSAFE(...)
-    PROTOTYPE:
-    CODE:
-        RETVAL = &ZOO_READ_ACL_UNSAFE;
-    OUTPUT:
-        RETVAL
+    newCONSTSUB(stash, "ZOK",                      newSViv(ZOK));
+    newCONSTSUB(stash, "ZSYSTEMERROR",             newSViv(ZSYSTEMERROR));
+    newCONSTSUB(stash, "ZRUNTIMEINCONSISTENCY",    newSViv(ZRUNTIMEINCONSISTENCY));
+    newCONSTSUB(stash, "ZDATAINCONSISTENCY",       newSViv(ZDATAINCONSISTENCY));
+    newCONSTSUB(stash, "ZCONNECTIONLOSS",          newSViv(ZCONNECTIONLOSS));
+    newCONSTSUB(stash, "ZMARSHALLINGERROR",        newSViv(ZMARSHALLINGERROR));
+    newCONSTSUB(stash, "ZUNIMPLEMENTED",           newSViv(ZUNIMPLEMENTED));
+    newCONSTSUB(stash, "ZOPERATIONTIMEOUT",        newSViv(ZOPERATIONTIMEOUT));
+    newCONSTSUB(stash, "ZBADARGUMENTS",            newSViv(ZBADARGUMENTS));
+    newCONSTSUB(stash, "ZINVALIDSTATE",            newSViv(ZINVALIDSTATE));
+    newCONSTSUB(stash, "ZAPIERROR",                newSViv(ZAPIERROR));
+    newCONSTSUB(stash, "ZNONODE",                  newSViv(ZNONODE));
+    newCONSTSUB(stash, "ZNOAUTH",                  newSViv(ZNOAUTH));
+    newCONSTSUB(stash, "ZBADVERSION",              newSViv(ZBADVERSION));
+    newCONSTSUB(stash, "ZNOCHILDRENFOREPHEMERALS", newSViv(ZNOCHILDRENFOREPHEMERALS));
+    newCONSTSUB(stash, "ZNODEEXISTS",              newSViv(ZNODEEXISTS));
+    newCONSTSUB(stash, "ZNOTEMPTY",                newSViv(ZNOTEMPTY));
+    newCONSTSUB(stash, "ZSESSIONEXPIRED",          newSViv(ZSESSIONEXPIRED));
+    newCONSTSUB(stash, "ZINVALIDCALLBACK",         newSViv(ZINVALIDCALLBACK));
+    newCONSTSUB(stash, "ZINVALIDACL",              newSViv(ZINVALIDACL));
+    newCONSTSUB(stash, "ZAUTHFAILED",              newSViv(ZAUTHFAILED));
+    newCONSTSUB(stash, "ZCLOSING",                 newSViv(ZCLOSING));
+    newCONSTSUB(stash, "ZNOTHING",                 newSViv(ZNOTHING));
 
-static struct ACL_vector*
-ZOO_CREATOR_ALL_ACL(...)
-    PROTOTYPE:
-    CODE:
-        RETVAL = &ZOO_CREATOR_ALL_ACL;
-    OUTPUT:
-        RETVAL
+    newCONSTSUB(stash, "ZOO_EPHEMERAL", newSViv(ZOO_EPHEMERAL));
+    newCONSTSUB(stash, "ZOO_SEQUENCE",  newSViv(ZOO_SEQUENCE));
+
+    newCONSTSUB(stash, "ZOO_OPEN_ACL_UNSAFE", acl_vector_to_sv(&ZOO_OPEN_ACL_UNSAFE));
+    newCONSTSUB(stash, "ZOO_READ_ACL_UNSAFE", acl_vector_to_sv(&ZOO_READ_ACL_UNSAFE));
+    newCONSTSUB(stash, "ZOO_CREATOR_ALL_ACL", acl_vector_to_sv(&ZOO_CREATOR_ALL_ACL));
+
+    newCONSTSUB(stash, "ZOO_PERM_READ",   newSViv(ZOO_PERM_READ));
+    newCONSTSUB(stash, "ZOO_PERM_WRITE",  newSViv(ZOO_PERM_WRITE));
+    newCONSTSUB(stash, "ZOO_PERM_CREATE", newSViv(ZOO_PERM_CREATE));
+    newCONSTSUB(stash, "ZOO_PERM_DELETE", newSViv(ZOO_PERM_DELETE));
+    newCONSTSUB(stash, "ZOO_PERM_ADMIN",  newSViv(ZOO_PERM_ADMIN));
+    newCONSTSUB(stash, "ZOO_PERM_ALL",    newSViv(ZOO_PERM_ALL));
+
+    newCONSTSUB(stash, "ZOO_CREATED_EVENT",     newSViv(ZOO_CREATED_EVENT));
+    newCONSTSUB(stash, "ZOO_DELETED_EVENT",     newSViv(ZOO_DELETED_EVENT));
+    newCONSTSUB(stash, "ZOO_CHANGED_EVENT",     newSViv(ZOO_CHANGED_EVENT));
+    newCONSTSUB(stash, "ZOO_CHILD_EVENT",       newSViv(ZOO_CHILD_EVENT));
+    newCONSTSUB(stash, "ZOO_SESSION_EVENT",     newSViv(ZOO_SESSION_EVENT));
+    newCONSTSUB(stash, "ZOO_NOTWATCHING_EVENT", newSViv(ZOO_NOTWATCHING_EVENT));
+
+    newCONSTSUB(stash, "ZOO_EXPIRED_SESSION_STATE", newSViv(ZOO_EXPIRED_SESSION_STATE));
+    newCONSTSUB(stash, "ZOO_AUTH_FAILED_STATE",     newSViv(ZOO_AUTH_FAILED_STATE));
+    newCONSTSUB(stash, "ZOO_CONNECTING_STATE",      newSViv(ZOO_CONNECTING_STATE));
+    newCONSTSUB(stash, "ZOO_ASSOCIATING_STATE",     newSViv(ZOO_ASSOCIATING_STATE));
+    newCONSTSUB(stash, "ZOO_CONNECTED_STATE",       newSViv(ZOO_CONNECTED_STATE));
+}
+
+const char*
+zerror(int c)
 

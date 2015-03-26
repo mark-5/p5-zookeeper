@@ -88,13 +88,14 @@ sub BUILD {
 
 around create => sub {
     my ($orig, $self, $path, $value, %extra) = @_;
-    return $self->$orig($path, $value, $extra{buffer_length}//$self->buffer_length, $extra{acl});
+    return $self->$orig($path, $value, $extra{buffer_length}//$self->buffer_length, $extra{acl}, $extra{flags}//0);
 };
 
 around add_auth => sub {
-    my ($orig, $self, $scheme, $credentials) = @_;
+    my ($orig, $self, $scheme, $credentials, %extra) = @_;
     $credentials = sha1_base64($credentials) if $scheme eq 'digest';
-    return $self->$orig($scheme, $credentials);
+    my $watcher = $extra{watcher} ? $self->create_watcher('', $extra{watcher}, type => 'add_auth') : undef;
+    return $self->$orig($scheme, $credentials, $watcher);
 };
 
 around delete => sub {
