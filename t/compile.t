@@ -4,8 +4,9 @@ use Test::More;
 use_ok($_) for qw(
     ZooKeeper::XS
     ZooKeeper
-    ZooKeeper::ACL
     ZooKeeper::Channel
+    ZooKeeper::Constants
+    ZooKeeper::Error
     ZooKeeper::Dispatcher
     ZooKeeper::Dispatcher::Pipe
     ZooKeeper::Dispatcher::AnyEvent

@@ -33,7 +33,7 @@ has buffer_length => (
 has dispatcher_type => (
     is       => 'ro',
     init_arg => 'dispatcher',
-    default  => 'AnyEvent',
+    default  => sub { $ENV{PERL_ZOOKEEPER_DISPATCHER} || 'AnyEvent' },
 );
 
 has dispatcher => (

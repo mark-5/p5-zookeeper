@@ -11,22 +11,22 @@ pzk_interrupt_dispatcher_t* T_PZK_INTERRUPT_O
 
 INPUT
 T_PZK_O
-    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper\");
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper\", 1);
 
 T_PZK_CHANNEL_O
-    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Channel\");
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Channel\", 1);
 
 T_PZK_WATCHER_O
-    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Watcher\");
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Watcher\", 1);
 
 T_PZK_DISPATCHER_O
-    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher\");
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher\", 1);
 
 T_PZK_PIPE_O
-    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher::Pipe\");
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher::Pipe\", 1);
 
 T_PZK_INTERRUPT_O
-    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher::Interrupt\");
+    $var = ($type) tied_object_to_ptr(aTHX_ $arg, \"$var\", \"ZooKeeper::Dispatcher::Interrupt\", 1);
 
 T_ZK_PTR
     if (SvOK($arg)) {

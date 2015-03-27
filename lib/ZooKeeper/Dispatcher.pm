@@ -30,13 +30,10 @@ sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
 
-    my $watcher;
-    my $store = $self->watchers->{$path}{$type} ||= {};
-
+    weaken(my $rwatcher = \my $watcher);
+    weaken(my $store = $self->watchers->{$path}{$type} ||= {});
     my $wrapped = sub {
-        delete $store->{$watcher} unless $type eq 'default';
-        weaken($store);
-        weaken($watcher);
+        delete $store->{$rwatcher} unless $type eq 'default';
         goto &$cb;
     };
 

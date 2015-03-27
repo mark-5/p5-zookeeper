@@ -1,16 +1,16 @@
 #ifndef PZK_XS_UTILS_H_
 #define PZK_XS_UTILS_H_
+#include <stdarg.h>
 
-void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg) {
+void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg, int fatal) {
     if (SvROK(obj_sv) && (SvTYPE(SvRV(obj_sv)) == SVt_PVHV)) {
         SV* tied_hash = SvRV(obj_sv);
         MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
-        if (!ext_magic) Perl_croak(aTHX_ "%s has not been initialized by %s", var, pkg);
-        return (void*) ext_magic->mg_ptr;
-    } else if (!SvOK(obj_sv)) {
-        return NULL;
+        if (!ext_magic && fatal) Perl_croak(aTHX_ "%s has not been initialized by %s", var, pkg);
+        return ext_magic ? (void*) ext_magic->mg_ptr : NULL;
     } else {
-        Perl_croak(aTHX_ "%s is not a blessed reference of type %s", var, pkg);
+        if (fatal) Perl_croak(aTHX_ "%s is not a blessed reference of type %s", var, pkg);
+        return NULL;
     }
 }
 
@@ -126,6 +126,32 @@ pzk_event_t* sv_to_event(pTHX_ SV* event_sv) {
     void* cb = cb_val_ptr ? (void*) *cb_val_ptr : NULL;
 
     return new_pzk_event(type, state, path, cb);
+}
+
+void throw_zerror(pTHX_ int rc, const char* fmt, ...) {
+    dSP;
+
+    ENTER;
+    SAVETMPS;
+
+    HV* args_hv = newHV();
+    hv_store(args_hv, "code", 4, newSViv(rc), 0);
+
+    va_list args; va_start(args, fmt);
+    hv_store(args_hv, "message", 7, newSVsv(vmess(fmt, &args)), 0);
+    va_end(args);
+
+    SV* args_sv = newRV_noinc((SV*) args_hv);
+
+    PUSHMARK(SP);
+    XPUSHs(sv_2mortal(newSVpv("ZooKeeper::Error", 0)));
+    XPUSHs(sv_2mortal(args_sv));
+    PUTBACK;
+
+    call_method("throw", G_DISCARD);
+
+    FREETMPS;
+    LEAVE;
 }
 
 #endif // ifndef PZK_XS_UTILS_H_

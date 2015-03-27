@@ -28,7 +28,7 @@ int pzk_dequeue_push(pzk_dequeue_t* dq, void* val) {
     } else {
         dq->first = dq->last = new;
     }
-    dq->length++;
+    dq->size++;
 
     pthread_mutex_unlock(dq->mutex);
     return 0;
@@ -46,7 +46,7 @@ int pzk_dequeue_unshift(pzk_dequeue_t* dq, void* val) {
     } else {
         dq->first = dq->last = new;
     }
-    dq->length++;
+    dq->size++;
 
     pthread_mutex_unlock(dq->mutex);
     return 0;
@@ -72,7 +72,7 @@ void* pzk_dequeue_pop(pzk_dequeue_t* dq) {
     void* value = last->value;
     _destroy_pzk_dequeue_node(last);
 
-    dq->length--;
+    dq->size--;
     pthread_mutex_unlock(dq->mutex);
     return value;
 }
@@ -97,7 +97,7 @@ void* pzk_dequeue_shift(pzk_dequeue_t* dq) {
     void* value = first->value;
     _destroy_pzk_dequeue_node(first);
 
-    dq->length--;
+    dq->size--;
     pthread_mutex_unlock(dq->mutex);
     return value;
 }
@@ -107,29 +107,29 @@ void** pzk_dequeue_elements(pzk_dequeue_t* dq) {
     int i;
     pzk_dequeue_node_t* node;
 
-    size_t length = dq->length;
-    if (!length) {
+    size_t size = dq->size;
+    if (!size) {
         pthread_mutex_unlock(dq->mutex);
         return NULL;
     }
     
-    void** elements = (void**) calloc(length + 1, sizeof(void*));
-    for (i = 0, node = dq->first; i < length; i++, node = node->next) {
+    void** elements = (void**) calloc(size + 1, sizeof(void*));
+    for (i = 0, node = dq->first; i < size; i++, node = node->next) {
         elements[i] = node->value;
     }
-    elements[length + 1] = NULL;
+    elements[size + 1] = NULL;
 
     pthread_mutex_unlock(dq->mutex);
     return elements;
 }
 
 void destroy_pzk_dequeue(pzk_dequeue_t* dq) {
-    size_t length = dq->length;
+    size_t size = dq->size;
     pzk_dequeue_node_t* node;
 
-    if (length) {
+    if (size) {
         int i;
-        for (i = 0, node = dq->first; i < length; i++) {
+        for (i = 0, node = dq->first; i < size; i++) {
             pzk_dequeue_node_t* next = node->next;
             _destroy_pzk_dequeue_node(node);
             node = next;

@@ -22,7 +22,7 @@ BOOT:
     zoo_set_log_stream(NULL);
 }
 
-static void
+void
 _xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
         SV*               self
         const char*       host
@@ -34,24 +34,27 @@ _xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
             watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
             zhandle_t* handle = zookeeper_init(host, cb, recv_timeout, clientid, (void*) watcher, flags);
-            pzk_t* pzk = new_pzk(handle);
+            if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", host, strerror(errno));
 
+            pzk_t* pzk = new_pzk(handle);
             sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
         }
 
 void
-DESTROY(pzk_t* pzk)
+DESTROY(SV* self)
     PPCODE:
-        zookeeper_close(pzk->handle);
-        destroy_pzk(pzk);
+        pzk_t* pzk = (pzk_t*) tied_object_to_ptr(aTHX_ self, NULL, NULL, 0);
+        if (pzk) {
+            if (pzk->handle) zookeeper_close(pzk->handle);
+            destroy_pzk(pzk);
+        }
 
-int
+void
 add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, pzk_watcher_t* watcher=NULL)
-    CODE:
+    PPCODE:
         void_completion_t cb = watcher ? pzk_dispatcher_auth_cb : NULL;
-        RETVAL = zoo_add_auth(pzk->handle, scheme, credential, strlen(credential), cb, (void*) watcher);
-    OUTPUT:
-        RETVAL
+        int rc = zoo_add_auth(pzk->handle, scheme, credential, strlen(credential), cb, (void*) watcher);
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error trying to authenticate: %s", zerror(rc));
 
 SV*
 create(pzk_t* pzk, char* path, char* value, int buffer_len, struct ACL_vector* acl=NULL, int flags=0)
@@ -61,15 +64,15 @@ create(pzk_t* pzk, char* path, char* value, int buffer_len, struct ACL_vector* a
         int rc = zoo_create(pzk->handle, path, value, value_len, acl, flags, buffer, buffer_len);
         RETVAL = newSVpv(buffer, 0);
         Safefree(buffer);
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error creating node '%s': %s", path, zerror(rc));
     OUTPUT:
         RETVAL
 
-int
+void
 delete(pzk_t* pzk, char* path, int version=-1)
-    CODE:
-        RETVAL = zoo_delete(pzk->handle, path, version);
-    OUTPUT:
-        RETVAL
+    PPCODE:
+        int rc = zoo_delete(pzk->handle, path, version);
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error deleting node '%s': %s", path, zerror(rc));
 
 SV*
 exists(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
@@ -81,7 +84,14 @@ exists(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
         } else {
             rc = zoo_exists(pzk->handle, path, 0, &stat);
         }
-        RETVAL = rc == ZOK ? stat_to_sv(aTHX_ &stat) : &PL_sv_undef;
+
+        if (rc == ZOK) {
+            RETVAL = stat_to_sv(aTHX_ &stat);
+        } else if (rc == ZNONODE) {
+            RETVAL = &PL_sv_undef;
+        } else {
+            throw_zerror(aTHX_ rc, "Error checking existence of node '%s': %s", path, zerror(rc));
+        }
     OUTPUT:
         RETVAL
 
@@ -103,7 +113,7 @@ get_children(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
             }
             XSRETURN(size);
         } else {
-            XSRETURN_EMPTY;
+            throw_zerror(aTHX_ rc, "Error getting children for node '%s': %s", path, zerror(rc));
         }
 
 void
@@ -118,7 +128,7 @@ get(pzk_t* pzk, char* path, int buffer_len, pzk_watcher_t* watcher=NULL)
             rc = zoo_get(pzk->handle, path, 0, buffer, &buffer_len, &stat);
         }
 
-        if (rc != ZOK) XSRETURN_EMPTY;
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error getting data for node '%s': %s", path, zerror(rc));
 
         ST(0) = newSVpv(buffer, 0);
         Safefree(buffer);
@@ -134,7 +144,8 @@ set(pzk_t* pzk, char* path, char* data, int version=-1)
     CODE:
         struct Stat stat; Zero(&stat, 1, struct Stat);
         int rc = zoo_set2(pzk->handle, path, data, strlen(data), version, &stat);
-        RETVAL = rc == ZOK ? stat_to_sv(aTHX_ &stat) : &PL_sv_undef;
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error setting data for node '%s': %s", path, zerror(rc));
+        RETVAL = stat_to_sv(aTHX_ &stat);
 
     OUTPUT:
         RETVAL
@@ -148,6 +159,9 @@ get_acl(pzk_t* pzk, char* path)
 
         ST(0) = sv_2mortal(acl_vector_to_sv(aTHX_ &acl));
         deallocate_ACL_vector(&acl);
+
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error getting acl for node '%s': %s", path, zerror(rc));
+
         if (GIMME_V == G_ARRAY) {
             ST(1) = sv_2mortal(stat_to_sv(aTHX_ &stat));
             XSRETURN(2);
@@ -155,15 +169,14 @@ get_acl(pzk_t* pzk, char* path)
             XSRETURN(1);
         }
 
-int
+void
 set_acl(pzk_t* pzk, char* path, SV* acl_sv, int version=-1)
-    CODE:
+    PPCODE:
         struct ACL_vector* acl = sv_to_acl_vector(aTHX_ acl_sv);
-        RETVAL = zoo_set_acl(pzk->handle, path, version, acl);
+        int rc = zoo_set_acl(pzk->handle, path, version, acl);
         Safefree(acl->data);
         Safefree(acl);
-    OUTPUT:
-        RETVAL
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error setting acl for node '%s': %s", path, zerror(rc));
 
 const clientid_t*
 client_id(pzk_t* pzk)
@@ -175,7 +188,7 @@ client_id(pzk_t* pzk)
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Channel
 
-static void
+void
 _xs_init(SV* self)
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
@@ -184,10 +197,17 @@ _xs_init(SV* self)
         }
 
 void
-DESTROY(pzk_dequeue_t* channel)
+DESTROY(SV* self)
     PPCODE:
-        destroy_pzk_dequeue(channel);
-        XSRETURN_YES;
+        pzk_dequeue_t* channel = (pzk_dequeue_t*) tied_object_to_ptr(aTHX_ self, NULL, NULL, 0);
+        if (channel) destroy_pzk_dequeue(channel);
+
+int
+size(pzk_dequeue_t* channel)
+    CODE:
+        RETVAL = channel->size;
+    OUTPUT:
+        RETVAL
 
 void
 send(pzk_dequeue_t* channel, ...)
@@ -213,7 +233,7 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher
 SV*
 recv_event(pzk_dispatcher_t* dispatcher)
     CODE:
-        if (!dispatcher->channel->length) XSRETURN_EMPTY;
+        if (!dispatcher->channel->size) XSRETURN_EMPTY;
         pzk_event_t* event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel);
         RETVAL = event ? event_to_sv(aTHX_ event) : &PL_sv_undef;
         if (event) destroy_pzk_event(event);
@@ -225,13 +245,25 @@ send_event(pzk_dispatcher_t* dispatcher, SV* event_sv)
     CODE:
         pzk_event_t* event = sv_to_event(aTHX_ event_sv);
         RETVAL = pzk_dequeue_push(dispatcher->channel, event) == 0;
+        if (event) dispatcher->notify(dispatcher);
     OUTPUT:
         RETVAL
+
+void
+DESTROY(SV* self)
+    PPCODE:
+        pzk_dispatcher_t* dispatcher = (pzk_dispatcher_t*) tied_object_to_ptr(aTHX_ self, NULL, NULL, 0);
+        if (dispatcher) {
+            pzk_event_t* event;
+            while (event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel)) {
+                destroy_pzk_event(event);
+            }
+        }
 
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher::Pipe
 
-static void
+void
 _xs_init(SV* self, pzk_dequeue_t* channel)
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
@@ -254,15 +286,15 @@ read_pipe(pzk_pipe_dispatcher_t* dispatcher)
         RETVAL
 
 void
-DESTROY(pzk_pipe_dispatcher_t* dispatcher)
+DESTROY(SV* self)
     PPCODE:
-        destroy_pzk_pipe_dispatcher(dispatcher);
-        XSRETURN_YES;
+        pzk_pipe_dispatcher_t* dispatcher = (pzk_pipe_dispatcher_t*) tied_object_to_ptr(aTHX_ self, NULL, NULL, 0);
+        if (dispatcher) destroy_pzk_pipe_dispatcher(dispatcher);
 
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher::Interrupt
 
-static void
+void
 _xs_init(SV* self, pzk_dequeue_t* channel, interrupt_fn func, void* arg)
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
@@ -271,15 +303,15 @@ _xs_init(SV* self, pzk_dequeue_t* channel, interrupt_fn func, void* arg)
         }
 
 void
-DESTROY(pzk_interrupt_dispatcher_t* dispatcher)
+DESTROY(SV* self)
     PPCODE:
-        destroy_pzk_interrupt_dispatcher(dispatcher);
-        XSRETURN_YES;
+        pzk_interrupt_dispatcher_t* dispatcher = (pzk_interrupt_dispatcher_t*) tied_object_to_ptr(aTHX_ self, NULL, NULL, 0);
+        if (dispatcher) destroy_pzk_interrupt_dispatcher(dispatcher);
 
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Watcher
 
-static void
+void
 _xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
@@ -290,11 +322,13 @@ _xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
         }
 
 void
-DESTROY(pzk_watcher_t* watcher)
+DESTROY(SV* self)
     PPCODE:
-        SvREFCNT_dec(watcher->event_ctx);
-        Safefree(watcher);
-        XSRETURN_YES;
+        pzk_watcher_t* watcher = (pzk_watcher_t*) tied_object_to_ptr(aTHX_ self, NULL, NULL, 0);
+        if (watcher) {
+            SvREFCNT_dec(watcher->event_ctx);
+            Safefree(watcher);
+        }
 
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Constants

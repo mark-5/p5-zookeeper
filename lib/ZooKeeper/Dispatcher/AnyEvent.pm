@@ -10,14 +10,6 @@ has ae_watcher => (
     predicate => 1,
 );
 
-around dispatch_event => sub {
-    my ($orig, $self, @args) = @_;
-    $self->clear_ae_watcher;
-    my $event = $self->$orig(@args);
-    $self->setup_ae_watcher;
-    return $event;
-};
-
 sub setup_ae_watcher {
     my ($self) = @_;
     weaken($self);

@@ -8,6 +8,7 @@ requires 'Carp';
 requires 'Digest::SHA';
 requires 'Moo';
 requires 'Scalar::Util';
+requires 'Throwable';
 requires 'XSLoader';
 
 test_requires 'Test::More';

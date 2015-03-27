@@ -13,7 +13,7 @@ typedef struct pzk_dequeue_node pzk_dequeue_node_t;
 typedef struct {
     pzk_dequeue_node_t* first;
     pzk_dequeue_node_t* last;
-    size_t              length;
+    size_t              size;
     pthread_mutex_t*    mutex;
 } pzk_dequeue_t;
 
