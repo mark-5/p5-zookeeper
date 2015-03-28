@@ -94,6 +94,14 @@ Possible ZooKeeper connection states. These are used for the state key of the ev
     ZOO_ASSOCIATING_STATE
     ZOO_CONNECTED_STATE
 
+=head2 watchers
+
+Types of ZooKeeper watchers.
+
+    ZWATCHERTYPE_CHILDREN
+    ZWATCHERTYPE_DATA
+    ZWATCHERTYPE_ANY
+
 =cut
 
 our %EXPORT_TAGS = (
@@ -154,6 +162,11 @@ our %EXPORT_TAGS = (
         ZOO_CONNECTING_STATE
         ZOO_ASSOCIATING_STATE
         ZOO_CONNECTED_STATE
+    )],
+    'watchers' => [qw(
+        ZWATCHERTYPE_CHILDREN
+        ZWATCHERTYPE_DATA
+        ZWATCHERTYPE_ANY
     )],
 );
 

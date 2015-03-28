@@ -131,5 +131,38 @@ sub wait {
     return $event;
 }
 
+=head2 get_watcher
+
+Return the ZooKeeper::Watcher instance for the given path and type.
+
+    my $watcher = $dispatcher->get_watcher($path, $type);
+
+=cut
+
+sub get_watcher {
+    my ($self, $path, $type) = @_;
+    return $self->watchers->{$path}{$type};
+}
+
+=head2 remove_watchers
+
+Remove ZooKeeper::Watcher instances for the given path. If type is specified, only watchers matching the path and type will be removed.
+
+    $dispatcher->remove_watchers($path, $type)
+
+        REQUIRED $path
+        OPTIONAL $type
+
+=cut
+
+sub remove_watchers {
+    my ($self, $path, $type) = @_;
+    my $watchers = $self->watchers;
+    if ($type) {
+        delete $watchers->{$path}{$type};
+    } else {
+        delete $watchers->{$path};
+    }
+}
 
 1;

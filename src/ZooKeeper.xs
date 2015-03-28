@@ -194,6 +194,14 @@ set_acl(pzk_t* pzk, char* path, SV* acl_sv, int version=-1)
         Safefree(acl);
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error setting acl for node '%s': %s", path, zerror(rc));
 
+void
+remove_watchers(pzk_t* pzk, const char* path, pzk_watcher_t* watcher=NULL, int local=0)
+    PPCODE:
+        watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
+        int wtype = ZWATCHERTYPE_ANY;
+        int rc = zoo_remove_watchers(pzk, path, wtype, cb, watcher, local);
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error removing watchers for node '%s': %s", path, zerror(rc));
+
 const clientid_t*
 client_id(pzk_t* pzk)
     CODE:
@@ -410,6 +418,10 @@ BOOT:
     newCONSTSUB(stash, "ZOO_CONNECTING_STATE",      newSViv(ZOO_CONNECTING_STATE));
     newCONSTSUB(stash, "ZOO_ASSOCIATING_STATE",     newSViv(ZOO_ASSOCIATING_STATE));
     newCONSTSUB(stash, "ZOO_CONNECTED_STATE",       newSViv(ZOO_CONNECTED_STATE));
+
+    newCONSTSUB(stash, "ZWATCHERTYPE_CHILDREN", newSViv(ZWATCHERTYPE_CHILDREN));
+    newCONSTSUB(stash, "ZWATCHERTYPE_DATA",     newSViv(ZWATCHERTYPE_DATA));
+    newCONSTSUB(stash, "ZWATCHERTYPE_ANY",      newSViv(ZWATCHERTYPE_ANY));
 }
 
 const char*

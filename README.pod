@@ -239,6 +239,21 @@ Set ACls for a node at the given path.
 
 =cut
 
+=head2 remove_watchers
+
+Remove watchers for a node at the given path.
+
+    $zk->remove_watchers($path, %extra)
+
+        REQUIRED $path
+
+        OPTIONAL %extra
+            local
+            type
+
+
+=cut
+
 =head1 AUTHOR
 
 Mark Flickinger <maf@cpan.org>

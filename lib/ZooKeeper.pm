@@ -341,6 +341,28 @@ around set_acl => sub {
     return $self->$orig($path, $acl, $extra{version}//-1);
 };
 
+=head2 remove_watchers
+
+Remove watchers for a node at the given path.
+
+    $zk->remove_watchers($path, %extra)
+
+        REQUIRED $path
+
+        OPTIONAL %extra
+            local
+            type
+
+=cut
+
+around remove_watchers => sub {
+    my ($orig, $self, $path, %extra) = @_;
+    my $dispatcher = $self->dispatcher;
+    my $watcher = exists $extra{type} ? $dispatcher->get_watcher($path, $type) : undef;
+    $self->$orig($path, $watcher, $extra{local});
+    $dispatcher->remove_watchers($path, $type);
+};
+
 =head1 AUTHOR
 
 Mark Flickinger <maf@cpan.org>
