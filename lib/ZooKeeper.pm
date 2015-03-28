@@ -58,11 +58,20 @@ has watcher => (
 
 =head2 authentication
 
-A hashref with the scheme keyed to credentials, used for authenticating with ZooKeeper.
+A hashref used for authenticating with ZooKeeper. Must include scheme and credentials keys, and an optional watcher.
 If using a digest scheme, credentials will be automatically hashed with Digest::SHA::sha1_base64
 
-    {$scheme => $auth}
-    {digest => "$username:$password"}
+    {
+        scheme      => $scheme,
+        credentials => $credentials,
+        watcher     => $watcher,
+    }
+
+    {
+        scheme      => 'digest',
+        credentials => "$username:$password",
+        watcher     => sub {},
+    }
 
 =cut
 
@@ -130,7 +139,11 @@ sub BUILD {
 
     $self->_xs_init($self->hosts, $self->timeout, $default_watcher, $args->{client_id});
 
-    $self->add_auth(%{$self->authentication}) if $self->authentication;
+    if (my $auth = $self->authentication) {
+        my $scheme = delete $auth->{scheme};
+        my $creds  = delete $auth->{credentials};
+        $self->add_auth($scheme => $creds, %$auth);
+    }
 }
 
 =head1 METHODS

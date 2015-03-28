@@ -38,11 +38,20 @@ A subroutine reference to be called by a default watcher for the ZooKeeper sessi
 
 =head2 authentication
 
-A hashref with the scheme keyed to credentials, used for authenticating with ZooKeeper.
+A hashref used for authenticating with ZooKeeper. Must include scheme and credentials keys, and an optional watcher.
 If using a digest scheme, credentials will be automatically hashed with Digest::SHA::sha1_base64
 
-    {$scheme => $auth}
-    {digest => "$username:$password"}
+    {
+        scheme      => $scheme,
+        credentials => $credentials,
+        watcher     => $watcher,
+    }
+
+    {
+        scheme      => 'digest',
+        credentials => "$username:$password",
+        watcher     => sub {},
+    }
 
 
 =cut

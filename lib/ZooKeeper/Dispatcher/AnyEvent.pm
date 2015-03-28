@@ -22,7 +22,6 @@ has ae_watcher => (
 
 sub setup_ae_watcher {
     my ($self) = @_;
-    weaken($self);
 
     my $w = AnyEvent->io(
         fh   => $self->fd,
@@ -30,6 +29,7 @@ sub setup_ae_watcher {
         cb   => sub { $self->dispatch_cb->() },
     );
     $self->ae_watcher($w);
+    weaken($self);
 }
 
 sub BUILD {

@@ -88,11 +88,11 @@ Possible ZooKeeper event types. These are used for the type key of the event has
 
 Possible ZooKeeper connection states. These are used for the state key of the event hashref, passed to ZooKeeper watcher callbacks.
 
-        ZOO_EXPIRED_SESSION_STATE
-        ZOO_AUTH_FAILED_STATE
-        ZOO_CONNECTING_STATE
-        ZOO_ASSOCIATING_STATE
-        ZOO_CONNECTED_STATE
+    ZOO_EXPIRED_SESSION_STATE
+    ZOO_AUTH_FAILED_STATE
+    ZOO_CONNECTING_STATE
+    ZOO_ASSOCIATING_STATE
+    ZOO_CONNECTED_STATE
 
 =cut
 
