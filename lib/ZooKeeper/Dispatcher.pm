@@ -30,15 +30,19 @@ sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
 
-    weaken(my $rwatcher = \my $watcher);
-    weaken(my $store = $self->watchers->{$path}{$type} ||= {});
+    my $watcher;
+    my $store = $self->watchers->{$path}{$type} ||= {};
     my $wrapped = sub {
-        delete $store->{$rwatcher} unless $type eq 'default';
+        delete $store->{$watcher} unless $type eq 'default';
         goto &$cb;
     };
 
     $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
-    return $store->{$watcher} = $watcher;
+    $store->{$watcher} = $watcher;
+
+    weaken($store);
+    weaken($watcher);
+    return $watcher;
 }
 
 sub dispatch_event {

@@ -264,11 +264,11 @@ recv_event(pzk_dispatcher_t* dispatcher)
         RETVAL
 
 int
-send_event(pzk_dispatcher_t* dispatcher, SV* event_sv)
+send_event(pzk_dispatcher_t* dispatcher, pzk_watcher_t* watcher, SV* event_sv)
     CODE:
         if (!dispatcher) Perl_croak(aTHX_ "dispatcher has not yet been initialized by ZooKeeper::Dispatcher");
 
-        pzk_event_t* event = sv_to_event(aTHX_ event_sv);
+        pzk_event_t* event = sv_to_event(aTHX_ watcher->event_ctx, event_sv);
         RETVAL = pzk_dequeue_push(dispatcher->channel, event) == 0;
         if (event) dispatcher->notify(dispatcher);
     OUTPUT:

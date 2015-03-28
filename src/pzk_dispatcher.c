@@ -34,9 +34,13 @@ pzk_event_t* new_pzk_event(int type, int state, const char* path, void* arg) {
     event->state = state;
     event->arg   = arg;
 
-    char* path_copy = calloc(strlen(path) + 1, sizeof(char));
-    strcpy(path_copy, path);
-    event->path = path_copy;
+    if (path) {
+        char* path_copy = calloc(strlen(path) + 1, sizeof(char));
+        strcpy(path_copy, path);
+        event->path = path_copy;
+    } else {
+        event->path = NULL;
+    }
 
     return event;
 }

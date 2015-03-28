@@ -14,3 +14,4 @@ requires 'XSLoader';
 test_requires 'Test::Class::Moose';
 test_requires 'Test::More';
 test_requires 'Test::LeakTrace';
+test_requires 'Try::Tiny';
