@@ -23,9 +23,9 @@ BOOT:
 }
 
 void
-_xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
+_xs_init(self, hosts, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
         SV*               self
-        const char*       host
+        const char*       hosts
         pzk_watcher_t*    watcher
         int               recv_timeout
         const clientid_t* clientid
@@ -33,8 +33,8 @@ _xs_init(self, host, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
             watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
-            zhandle_t* handle = zookeeper_init(host, cb, recv_timeout, clientid, (void*) watcher, flags);
-            if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", host, strerror(errno));
+            zhandle_t* handle = zookeeper_init(hosts, cb, recv_timeout, clientid, (void*) watcher, flags);
+            if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", hosts, strerror(errno));
 
             pzk_t* pzk = new_pzk(handle);
             sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);

@@ -6,6 +6,18 @@ use Scalar::Util qw(weaken);
 use Moo;
 extends 'ZooKeeper::Dispatcher';
 
+=head1 NAME
+
+ZooKeeper::Dispatcher::Interrupt
+
+=head1 DESCRIPTION
+
+A ZooKeeper::Dispatcher implementation that uses Async::Interrupt for dispatching.
+
+In order to interrupt AnyEvent, during ZooKeeper::Dispatcher's wait call, the Interrupt implementation creates an AnyEvent timer to trigger every 100ms. This is needed because AnyEvent's recv blocks on a select call, which Async::Interrupt cannot interrupt by itself.
+
+=cut
+
 has interrupt => (
     is      => 'ro',
     builder => '_build_interrupt',
