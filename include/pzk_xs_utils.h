@@ -2,14 +2,12 @@
 #define PZK_XS_UTILS_H_
 #include <stdarg.h>
 
-void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg, int fatal) {
+void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg) {
     if (SvROK(obj_sv) && (SvTYPE(SvRV(obj_sv)) == SVt_PVHV)) {
         SV* tied_hash = SvRV(obj_sv);
         MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
-        if (!ext_magic && fatal) Perl_croak(aTHX_ "%s has not been initialized by %s", var, pkg);
         return ext_magic ? (void*) ext_magic->mg_ptr : NULL;
     } else {
-        if (fatal) Perl_croak(aTHX_ "%s is not a blessed reference of type %s", var, pkg);
         return NULL;
     }
 }

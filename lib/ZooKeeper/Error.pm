@@ -1,5 +1,5 @@
 package ZooKeeper::Error;
-use ZooKeeper::Constants qw(zerror);
+use ZooKeeper::Constants;
 use Moo;
 with 'Throwable';
 
@@ -12,7 +12,7 @@ has code => (
 
 has error => (
     is      => 'ro',
-    default => sub { zerror(shift->code) },
+    default => sub { ZooKeeper::Constants::zerror(shift->code) },
 );
 
 has message => (
