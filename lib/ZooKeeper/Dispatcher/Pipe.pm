@@ -11,7 +11,7 @@ ZooKeeper::Dispatcher::Pipe
 
 A ZooKeeper::Dispatcher implementation which uses a Unix pipe for dispatching.
 
-This class is intentded for subclassing, as it requires an event loop(such as AnyEvent) to handle reading from the pipe.
+This class is intended for subclassing, as it requires an event loop(such as AnyEvent) to handle reading from the pipe.
 
 =cut
 

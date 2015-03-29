@@ -63,7 +63,7 @@ T_PZK_INTERRUPT_O
     $arg = ptr_to_tied_object(aTHX_ (void*) $var, \"ZooKeeper::Dispatcher::Interrupt\");
 
 T_ZK_PTR
-    $arg = newRV_noinc( newSViv( PTR2IV($var)));
+    $arg = newSViv(PTR2IV($var));
 
 T_ZK_ACL_VECTOR
     $arg = acl_vector_to_sv($var);

@@ -6,7 +6,7 @@ use Carp;
 use Moo;
 use 5.10.1;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.5';
 
 =head1 NAME
 
@@ -149,8 +149,18 @@ has buffer_length => (
 The implementation of ZooKeeper::Dispatcher to be used.
 
 Valid types include:
-    AnyEvent  - ZooKeeper writes to a Unix pipe with an attached AnyEvent I/O watcher
-    Interrupt - ZooKeeper uses Async::Interrupt callbacks
+
+=over 4
+
+=item AnyEvent
+
+ZooKeeper writes to a Unix pipe with an attached AnyEvent I/O watcher
+
+=item Interrupt
+
+ZooKeeper uses Async::Interrupt callbacks
+
+=back
 
 =cut
 

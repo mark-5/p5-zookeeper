@@ -15,7 +15,7 @@ By default ZooKeeper::Constants imports all enums into a package. Individual enu
 
 =head1 EXPORT TAGS
 
-=head2 errors
+=head2 :errors
 
 Error codes returned by the ZooKeeper C library. Includes the zerror function for returning a string corresponding to the error code.
 
@@ -45,16 +45,16 @@ Error codes returned by the ZooKeeper C library. Includes the zerror function fo
     ZCLOSING
     ZNOTHING
 
-=head2 node_flags
+=head2 :node_flags
 
 Flags that may be used during node creation.
 
     ZOO_EPHEMERAL
     ZOO_SEQUENCE
 
-=head2 acl_perms
+=head2 :acl_perms
 
-ACL permissions that may be used for a nodes ACLS
+ACL permissions that may be used for a nodes ACLs
 
     ZOO_PERM_READ
     ZOO_PERM_WRITE
@@ -63,7 +63,7 @@ ACL permissions that may be used for a nodes ACLS
     ZOO_PERM_ADMIN
     ZOO_PERM_ALL
 
-=head2 acls
+=head2 :acls
 
 A predefined set of ACLs.
 
@@ -73,7 +73,7 @@ ACLs can also be constructed manually, as an arrayref of hashrefs, where hashref
     ZOO_READ_ACL_UNSAFE
     ZOO_CREATOR_ALL_ACL
 
-=head2 events
+=head2 :events
 
 Possible ZooKeeper event types. These are used for the type key of the event hashref, passed to ZooKeeper watcher callbacks.
 
@@ -84,7 +84,7 @@ Possible ZooKeeper event types. These are used for the type key of the event has
     ZOO_SESSION_EVENT
     ZOO_NOTWATCHING_EVENT
 
-=head2 states
+=head2 :states
 
 Possible ZooKeeper connection states. These are used for the state key of the event hashref, passed to ZooKeeper watcher callbacks.
 
