@@ -1,5 +1,6 @@
 package ZooKeeper;
 use ZooKeeper::XS;
+use ZooKeeper::Constants;
 use Digest::SHA qw(sha1_base64);
 use Carp;
 use Moo;
@@ -58,20 +59,9 @@ has watcher => (
 
 =head2 authentication
 
-A hashref used for authenticating with ZooKeeper. Must include scheme and credentials keys, and an optional watcher.
-If using a digest scheme, credentials will be automatically hashed with Digest::SHA::sha1_base64
+An arrayref used for authenticating with ZooKeeper. This will be passed as an array to add_auth.
 
-    {
-        scheme      => $scheme,
-        credentials => $credentials,
-        watcher     => $watcher,
-    }
-
-    {
-        scheme      => 'digest',
-        credentials => "$username:$password",
-        watcher     => sub {},
-    }
+    [$scheme, $credentials, %extra]
 
 =cut
 
@@ -140,9 +130,7 @@ sub BUILD {
     $self->_xs_init($self->hosts, $self->timeout, $default_watcher, $args->{client_id});
 
     if (my $auth = $self->authentication) {
-        my $scheme = delete $auth->{scheme};
-        my $creds  = delete $auth->{credentials};
-        $self->add_auth($scheme => $creds, %$auth);
+        $self->add_auth(@$auth);
     }
 }
 
@@ -179,14 +167,18 @@ Create a new node with the given path and data. Returns the path for the newly c
 
         OPTIONAL %extra
             acl
-            flags
             buffer_length
+            persistent
+            sequential
 
 =cut
 
 around create => sub {
     my ($orig, $self, $path, $value, %extra) = @_;
-    return $self->$orig($path, $value, $extra{buffer_length}//$self->buffer_length, $extra{acl}, $extra{flags}//0);
+    my $flags = 0;
+    $flags |= ZOO_EPHEMERAL if !$extra{persistent};
+    $flags |= ZOO_SEQUENCE  if $extra{sequential};
+    return $self->$orig($path, $value, $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
 };
 
 =head2 add_auth
