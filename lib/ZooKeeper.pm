@@ -20,6 +20,70 @@ ZooKeeper - Perl bindings for Apache ZooKeeper
     my @children = $zk->get_children('/', watcher => sub { my $event = shift; $cv->send($event) });
     my $child_event = $cv->recv;
 
+=head1 DESCRIPTION
+
+ZooKeeper is a perl interface to the Apache ZooKeeper C client library.
+
+=head2 How is this different from Net::ZooKeeper?
+
+=over 4
+
+=item ZooKeeper is written for asynchronous programming.
+
+To support asynchronous programs, watchers were implemented as code refs, which a ZooKeeper::Dispatcher asynchronously invokes with ZooKeeper event data. Conversely, Net::ZooKeeper used Net::ZooKeeper::Watch classes, which users must interact with using the wait method(which blocks).
+
+=item ZooKeeper data is represented as normal perl data types.
+
+ZooKeeper event and stat data are simply hashrefs and arrayrefs. Net::ZooKeeper instead provides specific perl classes for interacting with this data.
+
+=item ZooKeeper leverages perl exception handling.
+
+Instead of returning the C error codes, as Net::ZooKeeper does, ZooKeeper throws ZooKeeper::Error exceptions for unexpected return codes.
+
+=back
+
+=head2 Data Types
+
+=over 4
+
+=item acl
+
+Acls are represented as an arrayrefs of hashrefs, where each hashref includes an id, scheme, and permissions. Permissions flags can be imported from the ZooKeeper::Constants package.
+
+For instance, the ZOO_READ_ACL_UNSAFE would be represented as:
+
+    [{id => 'anyone', scheme => 'world', perms => ZOO_PERM_READ}]
+
+=item event
+
+A hashref of attributes for a watcher event. Includes the type of event(a ZooKeeper::Constants event), connection state(a ZooKeeper::Constants state) and the path of the node triggering the event.
+
+    {
+        path  => '/child',
+        state => ZOO_CONNECTED_STATE,
+        type  => ZOO_CHILD_EVENT,
+    }
+
+=item stat
+
+A hashref of fields from a C Stat struct.
+
+    {
+        aversion       => 0,
+        ctime          => 0,
+        cversion       => 0,
+        czxid          => 0,
+        ephemeralOwner => 0,
+        dataLength     => 0,
+        mtime          => 0,
+        mzxid          => 0,
+        numChildren    => 2,
+        pzxid          => 2334,
+        version        => 0,
+    }
+
+=back
+
 =head1 ATTRIBUTES
 
 =head2 hosts
@@ -152,9 +216,15 @@ Instantiate a new ZooKeeper connection.
 
 =head2 wait
 
-Synchronously dispatch one event. Returns the event hashref the watcher was called with.
-
 Calls wait on the underlying ZooKeeper::Dispatcher.
+
+Synchronously dispatch one event. Returns the event hashref the watcher was called with.
+Can optionally be passed a timeout(specified in seconds), which will cause wait to return undef if it does not complete in the specified time.
+
+    my $event = $zk->wait($seconds)
+
+    OPTIONAL $seconds
+
 
 =head2 create
 
@@ -332,6 +402,22 @@ around set_acl => sub {
     my ($orig, $self, $path, $acl, %extra) = @_;
     return $self->$orig($path, $acl, $extra{version}//-1);
 };
+
+=head1 CAVEATS
+
+=head2 Forking
+
+The underlying C library uses POSIX threads. This means that ZooKeeper is not fork safe. Only exec and POSIX::_exit can be guaranteed to work safely in the child process.
+
+=head2 Signals
+
+Many ZooKeeper recipes(such as in the examples directory), rely on clients properly shutting down to delete ephemeral nodes. Otherwise the ZooKeeper server will wait for the entire duration of the timeout specified by the session, before cleaning up. If you are expecting your program to handle signals(such as SIGINT), make sure the program is properly catching them and exiting. See the examples for more information.
+
+=head1 SEE ALSO
+
+The Apache ZooKeeper project's home page at
+L<http://zookeeper.apache.org/> provides a wealth of detail
+on how to develop applications using ZooKeeper.
 
 =head1 AUTHOR
 

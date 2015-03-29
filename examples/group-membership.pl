@@ -14,7 +14,7 @@ join_group($name);
 
 # make sure SIGINT cleanly destroys zookeeper connection
 # otherwise zookeeper will wait for the connection timeout
-my $w = AnyEvent->signal(signal => 'INT', cb => sub { exit 0 });
+$SIG{INT} = sub { exit 0 };
 AnyEvent->condvar->recv;
 
 

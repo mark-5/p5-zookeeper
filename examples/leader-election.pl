@@ -6,7 +6,7 @@ use ZooKeeper::Constants;
 use AnyEvent;
 use List::MoreUtils qw(before);
 
-my $root = '/election-example';
+my $root = '/example-election';
 my $zk   = ZooKeeper->new(hosts => 'localhost:2181');
 
 $zk->create($root, undef, persistent => 1) unless $zk->exists($root);
@@ -14,7 +14,7 @@ join_group();
 
 # make sure SIGINT cleanly destroys zookeeper connection
 # otherwise zookeeper will wait for the connection timeout
-my $w = AnyEvent->signal(signal => 'INT', cb => sub { exit 0 });
+$SIG{INT} = sub { exit 0 };
 AnyEvent->condvar->recv;
 
 

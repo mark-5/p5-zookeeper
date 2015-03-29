@@ -113,14 +113,21 @@ sub dispatch_event {
 =head2 wait
 
 Synchronously dispatch one event. Returns the event hashref the watcher was called with.
+Can optionally be passed a timeout(specified in seconds), which will cause wait to return undef if it does not complete in the specified time.
+
+    my $event = $zk->wait($seconds)
+
+    OPTIONAL $seconds
 
 =cut
 
 sub wait {
-    my ($self) = @_;
+    my ($self, $time) = @_;
     weaken($self);
 
     my $cv = AnyEvent->condvar;
+    my $w; $w = AnyEvent->timer(after => $time, cb => sub { $cv->send }) if $time;
+
     $self->dispatch_cb(sub {
         my $event = $self->dispatch_event;
         $cv->send($event);
