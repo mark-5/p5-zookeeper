@@ -178,7 +178,7 @@ around create => sub {
     my $flags = 0;
     $flags |= ZOO_EPHEMERAL if !$extra{persistent};
     $flags |= ZOO_SEQUENCE  if $extra{sequential};
-    return $self->$orig($path, $value, $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
+    return $self->$orig($path, $value//'', $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
 };
 
 =head2 add_auth

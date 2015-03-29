@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+use strict; use warnings;
 BEGIN { eval "use blib" }
 use ZooKeeper;
 use ZooKeeper::Constants;
@@ -8,11 +9,14 @@ use List::MoreUtils qw(before);
 my $root = '/election-example';
 my $zk   = ZooKeeper->new(hosts => 'localhost:2181');
 
-$zk->create($root, '', persistent => 1) unless $zk->exists($root);
+$zk->create($root, undef, persistent => 1) unless $zk->exists($root);
 join_group();
 
+# make sure SIGINT cleanly destroys zookeeper connection
+# otherwise zookeeper will wait for the connection timeout
 my $w = AnyEvent->signal(signal => 'INT', cb => sub { exit 0 });
 AnyEvent->condvar->recv;
+
 
 sub node_from_path {
     my ($path) = @_;
@@ -55,7 +59,7 @@ sub elect_leader {
 }
 
 sub join_group {
-    my $me = node_from_path($zk->create("$root/n-", '', sequential => 1));
+    my $me = node_from_path($zk->create("$root/n-", undef, sequential => 1));
     elect_leader($me);
 }
 
