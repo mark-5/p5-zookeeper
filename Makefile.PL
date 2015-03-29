@@ -5,6 +5,10 @@ use inc::Module::Install;
 all_from 'lib/ZooKeeper.pm';
 readme_pod_from 'lib/ZooKeeper.pm';
 
+homepage   'https://github.com/mark-5/p5-zookeeper';
+bugtracker 'https://github.com/mark-5/p5-zookeeper/issues';
+repository 'https://github.com/mark-5/p5-zookeeper.git';
+
 cc_assert_lib {header => 'zookeeper/zookeeper_version.h', lib => '-lzookeeper_mt'};
 
 use_ppport;
