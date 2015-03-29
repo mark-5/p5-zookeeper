@@ -50,7 +50,7 @@ Instead of returning the C error codes, as Net::ZooKeeper does, ZooKeeper throws
 
 Acls are represented as an arrayrefs of hashrefs, where each hashref includes an id, scheme, and permissions. Permissions flags can be imported from the ZooKeeper::Constants package.
 
-For instance, the ZOO_READ_ACL_UNSAFE would be represented as:
+For instance, ZOO_READ_ACL_UNSAFE would be represented as:
 
     [{id => 'anyone', scheme => 'world', perms => ZOO_PERM_READ}]
 
@@ -81,6 +81,22 @@ A hashref of fields from a C Stat struct.
         pzxid          => 2334,
         version        => 0,
     }
+
+=back
+
+=head2 Dispatchers
+
+ZooKeeper uses ZooKeeper::Dispatchers for communicating with callbacks registered by the C library. These callbacks are executed in separate POSIX threads, which write event data to a ZooKeeper::Channel and notify the dispatcher that an event is ready to be processed. How this notification occurs, and how perl callbacks are invoked, is what differentiates the types of dispatchers.
+
+=over 4
+
+=item AnyEvent
+
+ZooKeeper writes to a Unix pipe with an attached AnyEvent I/O watcher. This means that perl callbacks for watchers will be executed by the AnyEvent event loop.
+
+=item Interrupt
+
+ZooKeeper uses Async::Interrupt callbacks. This means the perl interpreter will be safely interrupted(waits for the current op to finish) in order to execute the corresponding perl callback. See Async::Interrupt for more details on how callbacks are executed. Be aware that this does not interrupt system calls(such as select) and XS code. This means if your code is blocking on a select(such as during an AnyEvent recv), the interrupt callback will not execute until the call has finished.
 
 =back
 
@@ -146,7 +162,7 @@ has buffer_length => (
 
 =head2 dispatcher
 
-The implementation of ZooKeeper::Dispatcher to be used.
+The implementation of ZooKeeper::Dispatcher to be used. Defaults to AnyEvent.
 
 Valid types include:
 
@@ -154,11 +170,7 @@ Valid types include:
 
 =item AnyEvent
 
-ZooKeeper writes to a Unix pipe with an attached AnyEvent I/O watcher
-
 =item Interrupt
-
-ZooKeeper uses Async::Interrupt callbacks
 
 =back
 
