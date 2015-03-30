@@ -279,7 +279,7 @@ DESTROY(pzk_dispatcher_t* dispatcher)
     PPCODE:
         if (dispatcher) {
             pzk_event_t* event;
-            while (event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel)) {
+            while ((event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel))) {
                 destroy_pzk_event(event);
             }
         }
