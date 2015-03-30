@@ -172,6 +172,10 @@ Instantiate a new ZooKeeper connection.
             OPTIONAL timeout
             OPTIONAL watcher
 
+=head2 state
+
+Get the state of the ZooKeeper connection. Returns a state enum from ZooKeeper::Constants.
+
 =head2 wait
 
 Calls wait on the underlying ZooKeeper::Dispatcher.

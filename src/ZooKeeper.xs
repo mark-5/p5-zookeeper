@@ -48,6 +48,14 @@ DESTROY(pzk_t* pzk)
             destroy_pzk(pzk);
         }
 
+int
+state(pzk_t* pzk)
+    CODE:
+        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
+        RETVAL = zoo_state(pzk->handle);
+    OUTPUT:
+        RETVAL
+
 void
 add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, pzk_watcher_t* watcher=NULL)
     PPCODE:
