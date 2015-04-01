@@ -1,2 +1,5 @@
+0.0.8 - 2015-03-31
+  - correct mistake in examples/barrier.pl
+
 0.0.7 - 2015-03-31
   - make value argument optional for ZooKeeper::create

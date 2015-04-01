@@ -46,7 +46,7 @@ sub exit_barrier {
             while (@rest) {
                 my $cv = AE::cv;
                 $cv->recv if $zk->exists("$bar/$rest[-1]", watcher => sub { $cv->send });
-                (undef, @rest) = $zk->get_children($bar);
+                (undef, @rest) = sort $zk->get_children($bar);
             }
             $zk->delete("$bar/$proc");
         } else {
