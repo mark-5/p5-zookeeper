@@ -256,25 +256,25 @@ Can optionally be passed a timeout(specified in seconds), which will cause wait 
 
 Create a new node with the given path and data. Returns the path for the newly created node on succes. Otherwise a ZooKeeper::Error is thrown.
 
-    my $created_path = $zk->create($requested_path, $value, %extra);
+    my $created_path = $zk->create($requested_path, %extra);
 
         REQUIRED $requested_path
-        OPTIONAL $value
 
         OPTIONAL %extra
             acl
             buffer_length
             persistent
             sequential
+            value
 
 =cut
 
 around create => sub {
-    my ($orig, $self, $path, $value, %extra) = @_;
+    my ($orig, $self, $path, %extra) = @_;
     my $flags = 0;
     $flags |= ZOO_EPHEMERAL if !$extra{persistent};
     $flags |= ZOO_SEQUENCE  if $extra{sequential};
-    return $self->$orig($path, $value//'', $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
+    return $self->$orig($path, $extra{value}//'', $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
 };
 
 =head2 add_auth
@@ -413,11 +413,12 @@ Returns an ACLs arrayref on success, otherwise throws a ZooKeeper::Error
 
 =head2 set_acl
 
-Set ACls for a node at the given path.
+Set ACls for a node at the given path. Throws a ZooKeeper::Error on failure.
 
     $zk->set_acl($path => $acl, %extra)
 
         REQUIRED $path
+        REQUIRED $acl
 
         OPTIONAL %extra
             version

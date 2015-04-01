@@ -8,7 +8,7 @@ my $name = $ARGV[0] || sprintf("member-%d", int(rand 1000));
 
 my $group = '/example-group';
 my $zk    = ZooKeeper->new(hosts => 'localhost:2181');
-$zk->create($group, undef, persistent => 1) unless $zk->exists($group);
+$zk->create($group, persistent => 1) unless $zk->exists($group);
 
 join_group($name);
 
