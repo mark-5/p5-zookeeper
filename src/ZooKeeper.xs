@@ -127,8 +127,10 @@ get_children(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
             int i; for (i = 0; i < size; i++) {
                 ST(i) = sv_2mortal(newSVpv(strings.data[i], 0));
             }
+            deallocate_String_vector(&strings);
             XSRETURN(size);
         } else {
+            deallocate_String_vector(&strings);
             throw_zerror(aTHX_ rc, "Error getting children for node '%s': %s", path, zerror(rc));
         }
 
