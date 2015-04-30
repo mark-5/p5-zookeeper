@@ -397,9 +397,9 @@ BOOT:
     newCONSTSUB(stash, "ZOO_EPHEMERAL", newSViv(ZOO_EPHEMERAL));
     newCONSTSUB(stash, "ZOO_SEQUENCE",  newSViv(ZOO_SEQUENCE));
 
-    newCONSTSUB(stash, "ZOO_OPEN_ACL_UNSAFE", acl_vector_to_sv(&ZOO_OPEN_ACL_UNSAFE));
-    newCONSTSUB(stash, "ZOO_READ_ACL_UNSAFE", acl_vector_to_sv(&ZOO_READ_ACL_UNSAFE));
-    newCONSTSUB(stash, "ZOO_CREATOR_ALL_ACL", acl_vector_to_sv(&ZOO_CREATOR_ALL_ACL));
+    newCONSTSUB(stash, "ZOO_OPEN_ACL_UNSAFE", acl_vector_to_sv(aTHX_ &ZOO_OPEN_ACL_UNSAFE));
+    newCONSTSUB(stash, "ZOO_READ_ACL_UNSAFE", acl_vector_to_sv(aTHX_ &ZOO_READ_ACL_UNSAFE));
+    newCONSTSUB(stash, "ZOO_CREATOR_ALL_ACL", acl_vector_to_sv(aTHX_ &ZOO_CREATOR_ALL_ACL));
 
     newCONSTSUB(stash, "ZOO_PERM_READ",   newSViv(ZOO_PERM_READ));
     newCONSTSUB(stash, "ZOO_PERM_WRITE",  newSViv(ZOO_PERM_WRITE));

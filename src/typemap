@@ -37,7 +37,7 @@ T_ZK_PTR
 
 T_ZK_ACL_VECTOR
     if (SvOK($arg)) {
-        $var = sv_to_acl_vector($arg);
+        $var = sv_to_acl_vector(aTHX_ $arg);
     } else {
         $var = NULL;
     }
@@ -66,5 +66,5 @@ T_ZK_PTR
     $arg = newSViv(PTR2IV($var));
 
 T_ZK_ACL_VECTOR
-    $arg = acl_vector_to_sv($var);
+    $arg = acl_vector_to_sv(aTHX_ $var);
 
