@@ -6,7 +6,7 @@ use Carp;
 use Moo;
 use 5.10.1;
 
-our $VERSION = '0.0.10';
+our $VERSION = '0.0.11';
 
 =head1 NAME
 
