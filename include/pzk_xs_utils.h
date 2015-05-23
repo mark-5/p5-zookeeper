@@ -20,7 +20,7 @@ SV* ptr_to_tied_object(pTHX_ void* ptr, const char* pkg) {
 }
 
 struct ACL* sv_to_acl_entry(pTHX_ SV* acl_sv) {
-    if (!SvROK(acl_sv) || !(SvRV(acl_sv)) == SVt_PVHV)
+    if (!SvROK(acl_sv) || (SvTYPE(SvRV(acl_sv)) != SVt_PVHV))
         Perl_croak(aTHX_ "acl entry must be a hash ref");
     HV* acl_hv = (HV*) SvRV(acl_sv);
     struct ACL* acl_entry; Newxz(acl_entry, 1, struct ACL);
@@ -107,7 +107,7 @@ SV* event_to_sv(pTHX_ pzk_event_t* event) {
 }
 
 pzk_event_t* sv_to_event(pTHX_ void* cb, SV* event_sv) {
-    if (!SvROK(event_sv) || !(SvRV(event_sv)) == SVt_PVHV)
+    if (!SvROK(event_sv) || (SvTYPE(SvRV(event_sv)) != SVt_PVHV))
         Perl_croak(aTHX_ "entry entry must be a hash ref");
     HV* event_hv = (HV*) SvRV(event_sv);
 
