@@ -9,7 +9,7 @@ homepage   'https://github.com/mark-5/p5-zookeeper';
 bugtracker 'https://github.com/mark-5/p5-zookeeper/issues';
 repository 'https://github.com/mark-5/p5-zookeeper.git';
 
-cc_assert_lib {header => 'zookeeper/zookeeper.h', lib => '-lzookeeper_mt'};
+cc_assert_lib header => 'zookeeper/zookeeper.h', lib => 'zookeeper_mt';
 
 use_ppport;
 cc_include_paths 'include';
