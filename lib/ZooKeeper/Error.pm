@@ -1,5 +1,4 @@
 package ZooKeeper::Error;
-use ZooKeeper::Constants;
 use Moo;
 with 'Throwable';
 
@@ -42,7 +41,12 @@ The string corresponding to the ZooKeeper error code, usually given by ZooKeeper
 
 has error => (
     is      => 'ro',
-    default => sub { ZooKeeper::Constants::zerror(shift->code) },
+    lazy    => 1,
+    default => sub {
+        my ($self) = @_;
+        require ZooKeeper::Constants;
+        ZooKeeper::Constants::zerror($self->code)
+    },
 );
 
 =head2 message
@@ -53,6 +57,7 @@ A descriptive error message for the exception. This is what is returned when Zoo
 
 has message => (
     is      => 'ro',
+    lazy    => 1,
     default => sub { shift->error },
 );
 
