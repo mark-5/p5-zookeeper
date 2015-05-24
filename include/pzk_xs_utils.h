@@ -2,14 +2,28 @@
 #define PZK_XS_UTILS_H_
 #include <stdarg.h>
 
-void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg) {
-    if (SvROK(obj_sv) && (SvTYPE(SvRV(obj_sv)) == SVt_PVHV)) {
-        SV* tied_hash = SvRV(obj_sv);
-        MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
-        return ext_magic ? (void*) ext_magic->mg_ptr : NULL;
-    } else {
-        return NULL;
+void* _tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg, int unsafe) {
+    if (!SvROK(obj_sv) || (SvTYPE(SvRV(obj_sv)) != SVt_PVHV)) {
+        if (unsafe) return NULL;
+        Perl_croak(aTHX_ "%s is not a blessed reference of type %s", var, pkg);
     }
+
+    SV* tied_hash = SvRV(obj_sv);
+    MAGIC* ext_magic = mg_find(tied_hash, PERL_MAGIC_ext);
+    if (!ext_magic) {
+        if (unsafe) return NULL;
+        Perl_croak(aTHX_ "%s has not been initialized by %s", var, pkg);
+    }
+
+    return  (void*) ext_magic->mg_ptr;
+}
+
+void* unsafe_tied_object_to_ptr(pTHX_ SV* obj_sv) {
+    return _tied_object_to_ptr(aTHX_ obj_sv, NULL, NULL, 1);
+}
+
+void* tied_object_to_ptr(pTHX_ SV* obj_sv, const char* var, const char* pkg) {
+    return _tied_object_to_ptr(aTHX_ obj_sv, var, pkg, 0);
 }
 
 SV* ptr_to_tied_object(pTHX_ void* ptr, const char* pkg) {

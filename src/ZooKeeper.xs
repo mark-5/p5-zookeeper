@@ -23,15 +23,16 @@ BOOT:
 }
 
 void
-_xs_init(self, hosts, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
+_xs_init(self, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
         SV*               self
         const char*       hosts
-        pzk_watcher_t*    watcher
+        SV*               _watcher
         int               recv_timeout
         const clientid_t* clientid
         int               flags
     PPCODE:
         if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
+            pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
             watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
             zhandle_t* handle = zookeeper_init(hosts, cb, recv_timeout, clientid, (void*) watcher, flags);
             if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", hosts, strerror(errno));
@@ -41,8 +42,9 @@ _xs_init(self, hosts, recv_timeout, watcher=NULL, clientid=NULL, flags=0)
         }
 
 void
-DESTROY(pzk_t* pzk)
+DESTROY(SV* self)
     PPCODE:
+        pzk_t* pzk = (pzk_t*) unsafe_tied_object_to_ptr(self);
         if (pzk) {
             if (pzk->handle) zookeeper_close(pzk->handle);
             destroy_pzk(pzk);
@@ -51,16 +53,14 @@ DESTROY(pzk_t* pzk)
 int
 state(pzk_t* pzk)
     CODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
         RETVAL = zoo_state(pzk->handle);
     OUTPUT:
         RETVAL
 
 void
-add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, pzk_watcher_t* watcher=NULL)
+add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, SV* _watcher=NULL)
     PPCODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
         void_completion_t cb = watcher ? pzk_dispatcher_auth_cb : NULL;
         int rc = zoo_add_auth(pzk->handle, scheme, credential, strlen(credential), cb, (void*) watcher);
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error trying to authenticate: %s", zerror(rc));
@@ -68,8 +68,6 @@ add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, pzk_watcher_t* watcher
 SV*
 create(pzk_t* pzk, char* path, char* value, int buffer_len, struct ACL_vector* acl=NULL, int flags=0)
     CODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         char* buffer; Newxz(buffer, buffer_len + 1, char);
         size_t value_len = strlen(value);
         int rc = zoo_create(pzk->handle, path, value, value_len, acl, flags, buffer, buffer_len);
@@ -82,17 +80,15 @@ create(pzk_t* pzk, char* path, char* value, int buffer_len, struct ACL_vector* a
 void
 delete(pzk_t* pzk, char* path, int version=-1)
     PPCODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
         int rc = zoo_delete(pzk->handle, path, version);
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error deleting node '%s': %s", path, zerror(rc));
 
 SV*
-exists(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
+exists(pzk_t* pzk, char* path, SV* _watcher=NULL)
     CODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         int rc;
         struct Stat stat; Zero(&stat, 1, struct Stat);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
         if (watcher) {
             rc = zoo_wexists(pzk->handle, path, pzk_dispatcher_cb, (void*) watcher, &stat);
         } else {
@@ -110,12 +106,11 @@ exists(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
         RETVAL
 
 void
-get_children(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
+get_children(pzk_t* pzk, char* path, SV* _watcher=NULL)
     PPCODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         int rc;
         struct String_vector strings; Zero(&strings, 1, struct String_vector);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
         if (watcher) {
             rc = zoo_wget_children(pzk->handle, path, pzk_dispatcher_cb, (void*) watcher, &strings);
         } else {
@@ -135,13 +130,12 @@ get_children(pzk_t* pzk, char* path, pzk_watcher_t* watcher=NULL)
         }
 
 void
-get(pzk_t* pzk, char* path, int buffer_len, pzk_watcher_t* watcher=NULL)
+get(pzk_t* pzk, char* path, int buffer_len, SV* _watcher=NULL)
     PPCODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         int rc;
         char* buffer; Newxz(buffer, buffer_len + 1, char);
         struct Stat stat; Zero(&stat, 1, struct Stat);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
         if (watcher) {
             rc = zoo_wget(pzk->handle, path, pzk_dispatcher_cb, watcher, buffer, &buffer_len, &stat);
         } else {
@@ -162,8 +156,6 @@ get(pzk_t* pzk, char* path, int buffer_len, pzk_watcher_t* watcher=NULL)
 SV*
 set(pzk_t* pzk, char* path, char* data, int version=-1)
     CODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         struct Stat stat; Zero(&stat, 1, struct Stat);
         int rc = zoo_set2(pzk->handle, path, data, strlen(data), version, &stat);
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error setting data for node '%s': %s", path, zerror(rc));
@@ -175,8 +167,6 @@ set(pzk_t* pzk, char* path, char* data, int version=-1)
 void
 get_acl(pzk_t* pzk, char* path)
     PPCODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         struct Stat stat; Zero(&stat, 1, struct Stat);
         struct ACL_vector acl; Zero(&acl, 1, struct ACL_vector);
         int rc = zoo_get_acl(pzk->handle, path, &acl, &stat);
@@ -196,8 +186,6 @@ get_acl(pzk_t* pzk, char* path)
 void
 set_acl(pzk_t* pzk, char* path, SV* acl_sv, int version=-1)
     PPCODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
-
         struct ACL_vector* acl = sv_to_acl_vector(aTHX_ acl_sv);
         int rc = zoo_set_acl(pzk->handle, path, version, acl);
         Safefree(acl->data);
@@ -207,7 +195,6 @@ set_acl(pzk_t* pzk, char* path, SV* acl_sv, int version=-1)
 const clientid_t*
 client_id(pzk_t* pzk)
     CODE:
-        if (!pzk) Perl_croak(aTHX_ "handle has not yet been initialized by ZooKeeper");
         RETVAL = zoo_client_id(pzk->handle);
     OUTPUT:
         RETVAL
@@ -224,14 +211,14 @@ _xs_init(SV* self)
         }
 
 void
-DESTROY(pzk_dequeue_t* channel)
+DESTROY(SV* self)
     PPCODE:
+        pzk_dequeue_t* channel = (pzk_dequeue_t*) unsafe_tied_object_to_ptr(self);
         if (channel) destroy_pzk_dequeue(channel);
 
 int
 size(pzk_dequeue_t* channel)
     CODE:
-        if (!channel) Perl_croak(aTHX_ "channel has not yet been initialized by ZooKeeper::Channel");
         RETVAL = channel->size;
     OUTPUT:
         RETVAL
@@ -239,8 +226,6 @@ size(pzk_dequeue_t* channel)
 void
 send(pzk_dequeue_t* channel, ...)
     PPCODE:
-        if (!channel) Perl_croak(aTHX_ "channel has not yet been initialized by ZooKeeper::Channel");
-
         int i;
         for (i = 1; i < items; i++) {
             pzk_dequeue_push(channel, SvREFCNT_inc(ST(i)));
@@ -250,8 +235,6 @@ send(pzk_dequeue_t* channel, ...)
 SV*
 recv(pzk_dequeue_t* channel)
     CODE:
-        if (!channel) Perl_croak(aTHX_ "channel has not yet been initialized by ZooKeeper::Channel");
-
         SV* element = (SV*) pzk_dequeue_shift(channel);
         if (!element) element = &PL_sv_undef;
         RETVAL = element;
@@ -264,8 +247,6 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher
 SV*
 recv_event(pzk_dispatcher_t* dispatcher)
     CODE:
-        if (!dispatcher) Perl_croak(aTHX_ "dispatcher has not yet been initialized by ZooKeeper::Dispatcher");
-
         if (!dispatcher->channel->size) XSRETURN_EMPTY;
         pzk_event_t* event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel);
         RETVAL = event ? event_to_sv(aTHX_ event) : &PL_sv_undef;
@@ -276,8 +257,6 @@ recv_event(pzk_dispatcher_t* dispatcher)
 int
 send_event(pzk_dispatcher_t* dispatcher, pzk_watcher_t* watcher, SV* event_sv)
     CODE:
-        if (!dispatcher) Perl_croak(aTHX_ "dispatcher has not yet been initialized by ZooKeeper::Dispatcher");
-
         pzk_event_t* event = sv_to_event(aTHX_ watcher->event_ctx, event_sv);
         RETVAL = pzk_dequeue_push(dispatcher->channel, event) == 0;
         if (event) dispatcher->notify(dispatcher);
@@ -285,8 +264,9 @@ send_event(pzk_dispatcher_t* dispatcher, pzk_watcher_t* watcher, SV* event_sv)
         RETVAL
 
 void
-DESTROY(pzk_dispatcher_t* dispatcher)
+DESTROY(SV* self)
     PPCODE:
+        pzk_dispatcher_t* dispatcher = (pzk_dispatcher_t*) unsafe_tied_object_to_ptr(self);
         if (dispatcher) {
             pzk_event_t* event;
             while ((event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel))) {
@@ -308,7 +288,6 @@ _xs_init(SV* self, pzk_dequeue_t* channel)
 int
 fd(pzk_pipe_dispatcher_t* dispatcher)
     CODE:
-        if (!dispatcher) Perl_croak(aTHX_ "dispatcher has not yet been initialized by ZooKeeper::Dispatcher::Pipe");
         RETVAL = dispatcher->fd[0];
     OUTPUT:
         RETVAL
@@ -316,14 +295,14 @@ fd(pzk_pipe_dispatcher_t* dispatcher)
 int
 read_pipe(pzk_pipe_dispatcher_t* dispatcher)
     CODE:
-        if (!dispatcher) Perl_croak(aTHX_ "dispatcher has not yet been initialized by ZooKeeper::Dispatcher::Pipe");
         RETVAL = dispatcher->read_pipe(dispatcher);
     OUTPUT:
         RETVAL
 
 void
-DESTROY(pzk_pipe_dispatcher_t* dispatcher)
+DESTROY(SV* self)
     PPCODE:
+        pzk_pipe_dispatcher_t* dispatcher = (pzk_pipe_dispatcher_t*) unsafe_tied_object_to_ptr(self);
         if (dispatcher) destroy_pzk_pipe_dispatcher(dispatcher);
 
 
@@ -338,8 +317,9 @@ _xs_init(SV* self, pzk_dequeue_t* channel, interrupt_fn func, void* arg)
         }
 
 void
-DESTROY(pzk_interrupt_dispatcher_t* dispatcher)
+DESTROY(SV* self)
     PPCODE:
+        pzk_interrupt_dispatcher_t* dispatcher = (pzk_interrupt_dispatcher_t*) unsafe_tied_object_to_ptr(self);
         if (dispatcher) destroy_pzk_interrupt_dispatcher(dispatcher);
 
 
@@ -356,8 +336,9 @@ _xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
         }
 
 void
-DESTROY(pzk_watcher_t* watcher)
+DESTROY(SV* self)
     PPCODE:
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(self);
         if (watcher) {
             SvREFCNT_dec(watcher->event_ctx);
             Safefree(watcher);
