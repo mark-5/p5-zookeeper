@@ -32,10 +32,10 @@ sub _build_interrupt {
 }
 
 around wait => sub {
-    my ($orig, $self) = @_;
+    my ($orig, $self, @args) = @_;
     my $tick   = 0.1;
     my $ticker = AnyEvent->timer(after => $tick, interval => $tick, cb => sub {});
-    $self->$orig();
+    $self->$orig(@args);
 };
 
 sub BUILD {
