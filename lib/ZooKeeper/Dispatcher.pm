@@ -49,8 +49,10 @@ has dispatch_cb => (
     is      => 'rw',
     default => sub {
         my ($self) = @_;
+        my $cb = sub { $self->dispatch_event };
+
         weaken($self);
-        return sub { $self->dispatch_event };
+        return $cb;
     },
 );
 
@@ -123,7 +125,6 @@ Can optionally be passed a timeout(specified in seconds), which will cause wait 
 
 sub wait {
     my ($self, $time) = @_;
-    weaken($self);
 
     my $cv = AnyEvent->condvar;
     my $w; $w = AnyEvent->timer(after => $time, cb => sub { $cv->send }) if $time;
@@ -135,6 +136,8 @@ sub wait {
     my $event = $cv->recv;
 
     $self->dispatch_cb(sub { $self->dispatch_event });
+
+    weaken($self);
     return $event;
 }
 

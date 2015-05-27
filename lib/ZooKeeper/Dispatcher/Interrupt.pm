@@ -25,8 +25,10 @@ has interrupt => (
 
 sub _build_interrupt {
     my ($self) = @_;
+    my $interrupt = Async::Interrupt->new(cb => sub { $self->dispatch_cb->() });
+
     weaken($self);
-    return Async::Interrupt->new(cb => sub { $self->dispatch_cb->() });
+    return $interrupt;
 }
 
 around wait => sub {
