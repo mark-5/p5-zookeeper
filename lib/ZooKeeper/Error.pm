@@ -2,7 +2,10 @@ package ZooKeeper::Error;
 use Moo;
 with 'Throwable';
 
-use overload '""' => \&stringify, fallback => 1;
+use overload
+    '0+'     => \&numify,
+    '""'     => \&stringify,
+    fallback => 1;
 
 =head1 NAME
 
@@ -24,7 +27,7 @@ A Throwable class for ZooKeeper exceptions.
 
 =head2 code
 
-The error code returned by the ZooKeeper C library. See ZooKeeper::Constants for possible error codes.
+The error code returned by the ZooKeeper C library. See ZooKeeper::Constants for possible error codes. This is returned when ZooKeeper::Error's are numified.
 
 =cut
 
@@ -51,7 +54,7 @@ has error => (
 
 =head2 message
 
-A descriptive error message for the exception. This is what is returned when ZooKeeper::Error's are stringified.
+A descriptive error message for the exception. This is returned when ZooKeeper::Error's are stringified.
 
 =cut
 
@@ -60,6 +63,8 @@ has message => (
     lazy    => 1,
     default => sub { shift->error },
 );
+
+sub numify    { shift->code    }
 
 sub stringify { shift->message }
 
