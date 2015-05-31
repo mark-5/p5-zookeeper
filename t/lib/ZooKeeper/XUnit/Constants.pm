@@ -17,5 +17,24 @@ sub test_leaks {
     }
 }
 
+sub test_standard_acls {
+    is_deeply(
+        ZOO_OPEN_ACL_UNSAFE,
+        [{id => 'anyone', perms => ZOO_PERM_ALL, scheme => 'world'}],
+        'reconstructed ZOO_OPEN_ACL_UNSAFE in perl',
+    );
+
+    is_deeply(
+        ZOO_READ_ACL_UNSAFE,
+        [{id => 'anyone', perms => ZOO_PERM_READ, scheme => 'world'}],
+        'reconstructed ZOO_READ_ACL_UNSAFE in perl',
+    );
+
+    is_deeply(
+        ZOO_CREATOR_ALL_ACL,
+        [{id => '', perms => ZOO_PERM_ALL, scheme => 'auth'}],
+        'reconstructed ZOO_CREATOR_ALL_ACL in perl',
+    );
+}
 
 1;
