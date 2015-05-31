@@ -80,18 +80,16 @@ sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
 
-    my $watcher;
     my $store = $self->watchers->{$path} ||= {};
     my $wrapped = sub {
         delete $store->{$type} unless $type eq 'default';
         goto &$cb;
     };
 
-    $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
+    my $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
     $store->{$type} = $watcher;
 
     weaken($store);
-    weaken($watcher);
     return $watcher;
 }
 
