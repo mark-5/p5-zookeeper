@@ -26,6 +26,4 @@ void* pzk_dequeue_pop(pzk_dequeue_t*);
 int pzk_dequeue_unshift(pzk_dequeue_t*, void*);
 void* pzk_dequeue_shift(pzk_dequeue_t*);
 
-void** pzk_dequeue_elements(pzk_dequeue_t*);
-
 #endif // ifndef PZK_DEQUEUE_H_

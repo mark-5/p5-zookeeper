@@ -6,7 +6,7 @@ const clientid_t*  T_ZK_PTR
 interrupt_fn       T_ZK_PTR
 struct ACL_vector* T_ZK_ACL_VECTOR
 pzk_dispatcher_t*  T_PZK_DISPATCHER_O
-pzk_pipe_dispatcher_t* T_PZK_PIPE_O
+pzk_pipe_dispatcher_t*      T_PZK_PIPE_O
 pzk_interrupt_dispatcher_t* T_PZK_INTERRUPT_O
 
 INPUT

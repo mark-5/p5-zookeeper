@@ -31,15 +31,15 @@ _xs_init(self, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
         const clientid_t* clientid
         int               flags
     PPCODE:
-        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
-            watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
-            zhandle_t* handle = zookeeper_init(hosts, cb, recv_timeout, clientid, (void*) watcher, flags);
-            if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", hosts, strerror(errno));
+        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
 
-            pzk_t* pzk = new_pzk(handle);
-            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
-        }
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
+        watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
+        zhandle_t* handle = zookeeper_init(hosts, cb, recv_timeout, clientid, (void*) watcher, flags);
+        if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", hosts, strerror(errno));
+
+        pzk_t* pzk = new_pzk(handle);
+        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
 
 void
 DESTROY(SV* self)
@@ -205,10 +205,10 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Channel
 void
 _xs_init(SV* self)
     PPCODE:
-        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            pzk_dequeue_t* channel = new_pzk_dequeue();
-            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) channel, 0);
-        }
+        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
+
+        pzk_dequeue_t* channel = new_pzk_dequeue();
+        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) channel, 0);
 
 void
 DESTROY(SV* self)
@@ -280,10 +280,10 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher::Pipe
 void
 _xs_init(SV* self, pzk_dequeue_t* channel)
     PPCODE:
-        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            pzk_pipe_dispatcher_t* dispatcher = new_pzk_pipe_dispatcher(channel);
-            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) dispatcher, 0);
-        }
+        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
+
+        pzk_pipe_dispatcher_t* dispatcher = new_pzk_pipe_dispatcher(channel);
+        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) dispatcher, 0);
 
 int
 fd(pzk_pipe_dispatcher_t* dispatcher)
@@ -311,10 +311,10 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Dispatcher::Interrupt
 void
 _xs_init(SV* self, pzk_dequeue_t* channel, interrupt_fn func, void* arg)
     PPCODE:
-        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            pzk_interrupt_dispatcher_t* dispatcher = new_pzk_interrupt_dispatcher(channel, func, arg);
-            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) dispatcher, 0);
-        }
+        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
+
+        pzk_interrupt_dispatcher_t* dispatcher = new_pzk_interrupt_dispatcher(channel, func, arg);
+        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) dispatcher, 0);
 
 void
 DESTROY(SV* self)
@@ -328,12 +328,12 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Watcher
 void
 _xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
     PPCODE:
-        if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV) {
-            pzk_watcher_t* watcher; Newxz(watcher, 1, pzk_watcher_t);
-            watcher->dispatcher = dispatcher;
-            watcher->event_ctx  = (void*) SvREFCNT_inc(cb);
-            sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) watcher, 0);
-        }
+        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
+
+        pzk_watcher_t* watcher; Newxz(watcher, 1, pzk_watcher_t);
+        watcher->dispatcher = dispatcher;
+        watcher->event_ctx  = (void*) SvREFCNT_inc(cb);
+        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) watcher, 0);
 
 void
 DESTROY(SV* self)

@@ -88,8 +88,8 @@ void* pzk_dequeue_shift(pzk_dequeue_t* dq) {
 
     pzk_dequeue_node_t* next = first->next;
     if (next) {
-        next->prev  = NULL;
-        dq->first = next;
+        next->prev = NULL;
+        dq->first  = next;
     } else {
         dq->first = dq->last = NULL;
     }
@@ -100,27 +100,6 @@ void* pzk_dequeue_shift(pzk_dequeue_t* dq) {
     dq->size--;
     pthread_mutex_unlock(dq->mutex);
     return value;
-}
-
-void** pzk_dequeue_elements(pzk_dequeue_t* dq) {
-    pthread_mutex_lock(dq->mutex);
-    int i;
-    pzk_dequeue_node_t* node;
-
-    size_t size = dq->size;
-    if (!size) {
-        pthread_mutex_unlock(dq->mutex);
-        return NULL;
-    }
-    
-    void** elements = (void**) calloc(size + 1, sizeof(void*));
-    for (i = 0, node = dq->first; i < size; i++, node = node->next) {
-        elements[i] = node->value;
-    }
-    elements[size + 1] = NULL;
-
-    pthread_mutex_unlock(dq->mutex);
-    return elements;
 }
 
 void destroy_pzk_dequeue(pzk_dequeue_t* dq) {

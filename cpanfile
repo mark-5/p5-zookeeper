@@ -7,6 +7,7 @@ requires 'AnyEvent';
 requires 'Async::Interrupt';
 requires 'Carp';
 requires 'Digest::SHA';
+requires 'Module::Runtime';
 requires 'Moo';
 requires 'Scalar::Util';
 requires 'Throwable';

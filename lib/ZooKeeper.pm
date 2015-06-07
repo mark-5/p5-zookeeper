@@ -1,8 +1,9 @@
 package ZooKeeper;
 use ZooKeeper::XS;
 use ZooKeeper::Constants;
-use Digest::SHA qw(sha1_base64);
 use Carp;
+use Digest::SHA qw(sha1_base64);
+use Module::Runtime qw(require_module);
 use Moo;
 use 5.10.1;
 
@@ -176,29 +177,28 @@ Valid types include:
 
 =cut
 
-has dispatcher_type => (
-    is       => 'ro',
-    init_arg => 'dispatcher',
-    default  => sub { $ENV{PERL_ZOOKEEPER_DISPATCHER} || 'AnyEvent' },
+has dispatcher => (
+    is      => 'ro',
+    default => sub { $ENV{PERL_ZOOKEEPER_DISPATCHER} || 'AnyEvent' },
 );
 
-has dispatcher => (
-    is       => 'rw',
+has _dispatcher_obj => (
+    is       => 'ro',
     init_arg => undef,
+    lazy     => 1,
+    builder  => '_build_dispatcher_obj',
     handles  => [qw(create_watcher wait)],
 );
 
-sub _build_dispatcher {
+sub _build_dispatcher_obj {
     my ($self) = @_;
-    my $type  = lc $self->dispatcher_type;
+    my $type  = lc $self->dispatcher;
     my $class = $type eq 'anyevent'  ? 'ZooKeeper::Dispatcher::AnyEvent'
+
               : $type eq 'interrupt' ? 'ZooKeeper::Dispatcher::Interrupt'
               : croak "Unrecognized dispatcher type: $type";
 
-    unless (eval "require $class; 1") {
-        croak "Could not require dispatcher class $class: $@";
-    }
-
+    require_module($class);
     return $class->new;
 }
 
@@ -210,7 +210,6 @@ The client_id for a ZooKeeper session. Can be set during construction to resume 
 
 sub BUILD {
     my ($self, $args) = @_;
-    $self->dispatcher($self->_build_dispatcher);
     my $default_watcher = $self->watcher ? $self->create_watcher('' => $self->watcher, type => 'default') : undef;
 
     $self->_xs_init($self->hosts, $self->timeout, $default_watcher, $args->{client_id});
