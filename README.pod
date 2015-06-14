@@ -111,7 +111,7 @@ The session timout used for the ZooKeeper connection.
 
 =head2 watcher
 
-A subroutine reference to be called by a default watcher for the ZooKeeper session.
+A subroutine reference to be called by a default watcher for ZooKeeper session events.
 
 
 =cut
@@ -128,6 +128,13 @@ An arrayref used for authenticating with ZooKeeper. This will be passed as an ar
 =head2 buffer_length
 
 The default length of the buffer used for retrieving ZooKeeper data and paths. Defaults to 2048 bytes.
+
+
+=cut
+
+=head2 client_id
+
+The client_id for a ZooKeeper session. Can be set during construction to resume a previous session.
 
 
 =cut
@@ -149,9 +156,11 @@ Valid types include:
 
 =cut
 
-=head2 client_id
+=head2 ignore_session_events
 
-The client_id for a ZooKeeper session. Can be set during construction to resume a previous session.
+If set to false, all watchers will be triggered for session events, such as disconnecting and reconnecting to the ZooKeeper server. This means that watchers can be triggered multiple times, until the watcher event is triggered.
+
+The default value is true, which will only trigger watchers once, for the watcher event.
 
 
 =cut

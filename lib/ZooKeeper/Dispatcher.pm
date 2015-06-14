@@ -57,6 +57,17 @@ has dispatch_cb => (
     },
 );
 
+=head2 ignore_session_events
+
+Controls whether watchers should be triggered for session events.
+
+=cut
+
+has ignore_session_events => (
+    is      => "ro",
+    default => 1,
+);
+
 =head1 METHODS
 
 =head2 recv_event
@@ -84,8 +95,10 @@ sub create_watcher {
     my $store = $self->watchers->{$path} ||= {};
     my $wrapped = sub {
         my ($event) = @_;
-        unless ($type eq 'default' or $event->{type} == ZOO_SESSION_EVENT) {
-            delete $store->{$type};
+        if ($event->{type} == ZOO_SESSION_EVENT) {
+            return if $self->ignore_session_events and $type ne 'default';
+        } else {
+            delete $store->{$type} unless $type eq 'default';
         }
         goto &$cb;
     };
@@ -93,6 +106,7 @@ sub create_watcher {
     my $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
     $store->{$type} = $watcher;
 
+    weaken($self);
     weaken($store);
     return $watcher;
 }

@@ -75,7 +75,7 @@ sub test_leaks {
 
 sub test_session_events {
     my ($self) = @_;
-    my $dispatcher = $self->implementation->new;
+    my $dispatcher = $self->implementation->new(ignore_session_events => 0);
 
     my $cv = AnyEvent->condvar;
     $dispatcher->create_watcher("/" => sub{ $cv->send(shift) }, type => "test");
@@ -90,6 +90,25 @@ sub test_session_events {
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
     timeout 1, sub { $rv = $cv->recv };
     is_deeply $rv, $event, "dispatcher called watcher with additional watcher event";
+}
+
+sub test_ignore_session_events {
+    my ($self) = @_;
+    my $dispatcher = $self->implementation->new(ignore_session_events => 1);
+
+    my $cv = AnyEvent->condvar;
+    $dispatcher->create_watcher("/" => sub{ $cv->send(shift) }, type => "test");
+
+    my $event = {type => ZOO_SESSION_EVENT, state => 2, path => "/"};
+    $dispatcher->trigger_event(path => "/", type => "test", event => $event);
+    my $rv; timeout 1, sub { $rv = $cv->recv };
+    is_deeply $rv, undef, "dispatcher ignored session event";
+
+    $cv = AnyEvent->condvar;
+    $event->{type} = ZOO_CHILD_EVENT;
+    $dispatcher->trigger_event(path => "/", type => "test", event => $event);
+    timeout 1, sub { $rv = $cv->recv };
+    is_deeply $rv, $event, "dispatcher called watcher with watcher event";
 }
 
 1;

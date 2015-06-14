@@ -130,7 +130,7 @@ has timeout => (
 
 =head2 watcher
 
-A subroutine reference to be called by a default watcher for the ZooKeeper session.
+A subroutine reference to be called by a default watcher for ZooKeeper session events.
 
 =cut
 
@@ -160,6 +160,12 @@ has buffer_length => (
     is      => 'ro',
     default => 2048,
 );
+
+=head2 client_id
+
+The client_id for a ZooKeeper session. Can be set during construction to resume a previous session.
+
+=cut
 
 =head2 dispatcher
 
@@ -199,14 +205,21 @@ sub _build_dispatcher_obj {
               : croak "Unrecognized dispatcher type: $type";
 
     require_module($class);
-    return $class->new;
+    return $class->new(ignore_session_events => $self->ignore_session_events);
 }
 
-=head2 client_id
+=head2 ignore_session_events
 
-The client_id for a ZooKeeper session. Can be set during construction to resume a previous session.
+If set to false, all watchers will be triggered for session events, such as disconnecting and reconnecting to the ZooKeeper server. This means that watchers can be triggered multiple times, until the watcher event is triggered.
+
+The default value is true, which will only trigger watchers once, for the watcher event.
 
 =cut
+
+has ignore_session_events => (
+    is      => "ro",
+    default => 1,
+);
 
 sub BUILD {
     my ($self, $args) = @_;
