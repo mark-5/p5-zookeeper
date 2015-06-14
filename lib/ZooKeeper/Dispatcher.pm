@@ -1,6 +1,7 @@
 package ZooKeeper::Dispatcher;
 use ZooKeeper::XS;
 use ZooKeeper::Channel;
+use ZooKeeper::Constants qw(ZOO_SESSION_EVENT);
 use ZooKeeper::Watcher;
 use AnyEvent;
 use Scalar::Util qw(weaken);
@@ -82,7 +83,10 @@ sub create_watcher {
 
     my $store = $self->watchers->{$path} ||= {};
     my $wrapped = sub {
-        delete $store->{$type} unless $type eq 'default';
+        my ($event) = @_;
+        unless ($type eq 'default' or $event->{type} == ZOO_SESSION_EVENT) {
+            delete $store->{$type};
+        }
         goto &$cb;
     };
 
