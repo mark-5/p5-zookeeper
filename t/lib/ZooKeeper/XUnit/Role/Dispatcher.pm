@@ -3,6 +3,7 @@ use AnyEvent;
 use Test::LeakTrace;
 use Try::Tiny;
 use Test::Class::Moose::Role;
+use ZooKeeper::Constants qw(ZOO_CHILD_EVENT ZOO_SESSION_EVENT);
 requires qw(implementation);
 
 sub timeout {
@@ -70,6 +71,25 @@ sub test_leaks {
         $dispatcher->trigger_event(path => "/second", type => "second-test");
         timeout 1, sub { $cv->recv };
     } 'no leaks sending events through dispatcher';
+}
+
+sub test_session_events {
+    my ($self) = @_;
+    my $dispatcher = $self->implementation->new;
+
+    my $cv = AnyEvent->condvar;
+    $dispatcher->create_watcher("/" => sub{ $cv->send(shift) }, type => "test");
+
+    my $event = {type => ZOO_SESSION_EVENT, state => 2, path => "/"};
+    $dispatcher->trigger_event(path => "/", type => "test", event => $event);
+    my $rv; timeout 1, sub { $rv = $cv->recv };
+    is_deeply $rv, $event, "dispatcher called watcher with session event";
+
+    $cv = AnyEvent->condvar;
+    $event->{type} = ZOO_CHILD_EVENT;
+    $dispatcher->trigger_event(path => "/", type => "test", event => $event);
+    timeout 1, sub { $rv = $cv->recv };
+    is_deeply $rv, $event, "dispatcher called watcher with additional watcher event";
 }
 
 1;
