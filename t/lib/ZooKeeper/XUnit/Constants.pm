@@ -37,4 +37,14 @@ sub test_standard_acls {
     );
 }
 
+sub test_zevent {
+    is zevent(ZOO_CREATED_EVENT), "created";
+    is zevent(ZOO_NOTWATCHING_EVENT), "not watching";
+}
+
+sub test_zstate {
+    is zstate(ZOO_EXPIRED_SESSION_STATE), "expired session";
+    is zstate(ZOO_CONNECTING_STATE), "connecting";
+}
+
 1;

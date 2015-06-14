@@ -77,6 +77,8 @@ ACLs can also be constructed manually, as an arrayref of hashrefs, where hashref
 
 Possible ZooKeeper event types. These are used for the type key of the event hashref, passed to ZooKeeper watcher callbacks.
 
+    zevent
+
     ZOO_CREATED_EVENT
     ZOO_DELETED_EVENT
     ZOO_CHANGED_EVENT
@@ -87,6 +89,8 @@ Possible ZooKeeper event types. These are used for the type key of the event has
 =head2 :states
 
 Possible ZooKeeper connection states. These are used for the state key of the event hashref, passed to ZooKeeper watcher callbacks.
+
+    zstate
 
     ZOO_EXPIRED_SESSION_STATE
     ZOO_AUTH_FAILED_STATE
@@ -147,6 +151,7 @@ our %EXPORT_TAGS = (
         ZOO_CHILD_EVENT
         ZOO_SESSION_EVENT
         ZOO_NOTWATCHING_EVENT
+        zevent
     )],
     'states' => [qw(
         ZOO_EXPIRED_SESSION_STATE
@@ -154,11 +159,62 @@ our %EXPORT_TAGS = (
         ZOO_CONNECTING_STATE
         ZOO_ASSOCIATING_STATE
         ZOO_CONNECTED_STATE
+        zstate
     )],
 );
 
 our @EXPORT       = map {@{$EXPORT_TAGS{$_}}} keys %EXPORT_TAGS;
 our @EXPORT_OK    = @EXPORT;
 $EXPORT_TAGS{all} = \@EXPORT;
+
+=head1 FUNCTIONS
+
+=head2 zerror
+
+The ZooKeeper C API's zerror. Returns a string corresponding the error code.
+
+=cut
+
+our %_DESCRIPTIONS;
+sub _get_descriptions {
+    our %_DESCRIPTIONS;
+    my ($type) = @_;
+    return $_DESCRIPTIONS{$type} ||= do {
+        my @names = grep /^ZOO_/, @{$EXPORT_TAGS{$type}};
+        my %descs = map {
+            my $enum = __PACKAGE__->can($_)->();
+            my ($type) = /ZOO_(.*)_\w+/;
+            $type =~ tr/_/ /;
+            $type =~ s/^NOT(?<!HING)/NOT /;
+            ($enum => lc $type)
+        } @names;
+        \%descs;
+    };
+}
+
+=head2 zevent
+
+Returns a string corresponding to the event type.
+
+=cut
+
+sub zevent {
+    my ($enum) = @_;
+    my $events = _get_descriptions("events");
+    return $events->{$enum} || "unknown event";
+}
+
+=head2 zstate
+
+Returns a string corresponding to the connection state.
+
+=cut
+
+sub zstate {
+    my ($enum) = @_;
+    my $states = _get_descriptions("states");
+    return $states->{$enum} || "unknown state";
+}
+
 
 1;
