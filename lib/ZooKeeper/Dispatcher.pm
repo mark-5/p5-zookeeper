@@ -114,6 +114,19 @@ sub dispatch_event {
     }
 }
 
+=head2 trigger_event
+
+Manually trigger an event on a ZooKeeper::Watch.
+
+=cut
+
+sub trigger_event {
+    my ($self, %args) = @_;
+    my ($event, $path, $type) = @args{qw(event path type)};
+    my $watcher = $self->watchers->{$path}{$type};
+    return $watcher->trigger($event//{});
+}
+
 =head2 wait
 
 Synchronously dispatch one event. Returns the event hashref the watcher was called with.

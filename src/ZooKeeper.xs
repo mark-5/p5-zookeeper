@@ -254,15 +254,6 @@ recv_event(pzk_dispatcher_t* dispatcher)
     OUTPUT:
         RETVAL
 
-int
-send_event(pzk_dispatcher_t* dispatcher, pzk_watcher_t* watcher, SV* event_sv)
-    CODE:
-        pzk_event_t* event = sv_to_event(aTHX_ watcher->event_ctx, event_sv);
-        RETVAL = pzk_dequeue_push(dispatcher->channel, event) == 0;
-        if (event) dispatcher->notify(dispatcher);
-    OUTPUT:
-        RETVAL
-
 void
 DESTROY(SV* self)
     PPCODE:
@@ -334,6 +325,11 @@ _xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
         watcher->dispatcher = dispatcher;
         watcher->event_ctx  = (void*) SvREFCNT_inc(cb);
         sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) watcher, 0);
+
+void
+trigger(pzk_watcher_t* watcher, const char* path, int state, int type)
+    PPCODE:
+        pzk_dispatcher_cb(NULL, type, state, path, (void*) watcher);
 
 void
 DESTROY(SV* self)

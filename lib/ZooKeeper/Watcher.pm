@@ -43,6 +43,20 @@ has cb => (
     required => 1,
 );
 
+=head1 METHODS
+
+=head2 trigger
+
+Manually trigger an event on a watch.
+
+=cut
+
+around trigger => sub {
+    my ($orig, $self, $event) = @_;
+    my ($path, $state, $type) = @{$event}{qw(path state type)};
+    return $self->$orig($path//"", $state//0, $type//0);
+};
+
 sub BUILD {
     my ($self) = @_;
     $self->_xs_init($self->dispatcher, $self->cb);
