@@ -56,6 +56,8 @@ Flags that may be used during node creation.
 
 ACL permissions that may be used for a nodes ACLs
 
+    zperm
+
     ZOO_PERM_READ
     ZOO_PERM_WRITE
     ZOO_PERM_CREATE
@@ -138,6 +140,7 @@ our %EXPORT_TAGS = (
         ZOO_PERM_DELETE
         ZOO_PERM_ADMIN
         ZOO_PERM_ALL
+        zperm
     )],
     'acls' => [qw(
         ZOO_OPEN_ACL_UNSAFE
@@ -178,18 +181,39 @@ The ZooKeeper C API's zerror. Returns a string corresponding the error code.
 our %_DESCRIPTIONS;
 sub _get_descriptions {
     our %_DESCRIPTIONS;
-    my ($type) = @_;
+    my ($type, %args) = @_;
+    $args{regex} //= qr/ZOO_(.*)_\w+/;
     return $_DESCRIPTIONS{$type} ||= do {
         my @names = grep /^ZOO_/, @{$EXPORT_TAGS{$type}};
         my %descs = map {
             my $enum = __PACKAGE__->can($_)->();
-            my ($type) = /ZOO_(.*)_\w+/;
+            my ($type) = /$args{regex}/;
             $type =~ tr/_/ /;
             $type =~ s/^NOT(?<!HING)/NOT /;
             ($enum => lc $type)
         } @names;
         \%descs;
     };
+}
+
+=head2 zperm
+
+Returns a string corresponding to the acl permission.
+
+=cut
+
+sub zperm {
+    my ($enum) = @_;
+    my @matches;
+    my $perms = _get_descriptions("acl_perms", regex => qr/ZOO_PERM_(.*)/);
+    return $perms->{$enum} if $perms->{$enum};
+
+    for my $perm (sort {$perms->{$a} cmp $perms->{$b}} keys %$perms) {
+        my $name = $perms->{$perm};
+        next if $name eq "all";
+        push @matches, $perms->{$perm} if $enum & $perm;
+    }
+    return join("|", @matches) || "unknown perm";
 }
 
 =head2 zevent

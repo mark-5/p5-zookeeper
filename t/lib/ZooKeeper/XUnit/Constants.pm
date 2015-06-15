@@ -37,6 +37,13 @@ sub test_standard_acls {
     );
 }
 
+sub test_zperm {
+    is zperm(ZOO_PERM_ALL), "all";
+    is zperm(ZOO_PERM_READ), "read";
+    is zperm(ZOO_PERM_READ|ZOO_PERM_WRITE), "read|write";
+    is zperm(ZOO_PERM_READ|ZOO_PERM_WRITE|ZOO_PERM_CREATE), "create|read|write";
+}
+
 sub test_zevent {
     is zevent(ZOO_CREATED_EVENT), "created";
     is zevent(ZOO_NOTWATCHING_EVENT), "not watching";
