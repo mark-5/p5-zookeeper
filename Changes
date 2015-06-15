@@ -1,3 +1,6 @@
+0.0.13 - 2015-6-14
+  - add zevent and zstate functions
+
 0.0.12 - 2015-6-14
   - add numification for ZooKeeper::Error's
   - fix handling of session events

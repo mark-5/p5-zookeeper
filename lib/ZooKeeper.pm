@@ -7,7 +7,7 @@ use Module::Runtime qw(require_module);
 use Moo;
 use 5.10.1;
 
-our $VERSION = '0.0.12';
+our $VERSION = '0.0.13';
 
 =head1 NAME
 
