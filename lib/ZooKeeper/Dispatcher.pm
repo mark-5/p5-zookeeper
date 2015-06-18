@@ -91,24 +91,52 @@ Create a new ZooKeeper::Watcher. This is the preferred way to instantiate watche
 sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
+    my $default_watch = $type eq "default";
 
-    my $store = $self->watchers->{$path} ||= {};
+    my $watcher;
     my $wrapped = sub {
         my ($event) = @_;
-        if ($event->{type} == ZOO_SESSION_EVENT) {
-            return if $self->ignore_session_events and $type ne 'default';
-        } else {
-            delete $store->{$type} unless $type eq 'default';
+        my $sess_event = $event->{type} == ZOO_SESSION_EVENT;
+        if ($self->ignore_session_events) {
+            return if $sess_event and not $default_watch;
+        }
+        if (not $sess_event and not $default_watch) {
+            $self->_remove_watcher(
+                path    => $path,
+                type    => $type,
+                watcher => $watcher,
+            );
         }
         goto &$cb;
     };
 
-    my $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
-    $store->{$type} = $watcher;
+    $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
+    $self->_add_watcher(
+        path    => $path,
+        type    => $type,
+        watcher => $watcher,
+    );
 
     weaken($self);
-    weaken($store);
+    weaken($watcher);
     return $watcher;
+}
+
+sub _add_watcher {
+    my ($self, %args) = @_;
+    my ($path, $type, $watcher) = @args{qw(path type watcher)};
+    $self->watchers->{$path}{$type}{$watcher} = $watcher;
+}
+
+sub _remove_watcher {
+    my ($self, %args) = @_;
+    my ($path, $type, $watcher) = @args{qw(path type watcher)};
+    delete $self->watchers->{$path}{$type}{$watcher};
+
+    delete $self->watchers->{$path}{$type}
+        unless keys %{$self->watchers->{$path}{$type}||{}};
+    delete $self->watchers->{$path}
+        unless keys %{$self->watchers->{$path}||{}};
 }
 
 =head2 dispatch_event
@@ -137,8 +165,9 @@ Manually trigger an event on a ZooKeeper::Watch.
 sub trigger_event {
     my ($self, %args) = @_;
     my ($event, $path, $type) = @args{qw(event path type)};
-    my $watcher = $self->watchers->{$path}{$type};
-    return $watcher->trigger($event//{});
+
+    my @watchers = values %{$self->watchers->{$path}{$type}||{}};
+    $_->trigger($event//{}) for @watchers;
 }
 
 =head2 wait
