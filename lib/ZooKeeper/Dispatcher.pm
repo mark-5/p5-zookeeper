@@ -63,7 +63,7 @@ Controls whether watchers should be triggered for session events.
 =cut
 
 has ignore_session_events => (
-    is      => "ro",
+    is      => "rw",
     default => 1,
 );
 

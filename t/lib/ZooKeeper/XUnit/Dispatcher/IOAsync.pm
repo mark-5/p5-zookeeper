@@ -12,6 +12,8 @@ has loop => (
     },
 );
 
+sub test_startup { shift->test_skip("TODO") }
+
 sub new_dispatcher {
     my ($self, @args) = @_;
     require ZooKeeper::Dispatcher::IOAsync;

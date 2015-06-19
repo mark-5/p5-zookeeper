@@ -208,39 +208,24 @@ Valid types include:
 
 has dispatcher => (
     is      => 'ro',
+    isa     => sub { shift->isa('ZooKeeper::Dispatcher') },
+    coerce  => \&_to_dispatcher,
     default => sub { $ENV{PERL_ZOOKEEPER_DISPATCHER} || 'AnyEvent' },
-);
-
-has _dispatcher_obj => (
-    is       => 'ro',
-    init_arg => undef,
-    lazy     => 1,
-    builder  => '_build_dispatcher_obj',
-    handles  => [qw(
+    handles => [qw(
         create_watcher
         get_watchers
+        ignore_session_events
         remove_watcher
         wait
     )],
 );
+sub _to_dispatcher {
+    my ($disp) = @_;
+    return $disp unless $disp and not ref $disp;
 
-sub _build_dispatcher_obj {
-    my ($self) = @_;
-
-    my ($class, @args) = @_;
-    my $dispatcher = $self->dispatcher;
-    if (ref $dispatcher) {
-        ($class, @args) = @$dispatcher;
-    } else {
-        $class = $dispatcher;
-    }
-    $class = "ZooKeeper::Dispatcher::$class" unless s/^\+//;
+    my $class = $disp =~ s/\^+// ? $disp : "ZooKeeper::Dispatcher::$disp";
     require_module($class);
-
-    return $class->new(
-        ignore_session_events => $self->ignore_session_events,
-        @args,
-    );
+    return $class->new;
 }
 
 =head2 ignore_session_events
@@ -251,20 +236,17 @@ The default value is true, which will only trigger watchers once, for the watche
 
 =cut
 
-has ignore_session_events => (
-    is      => "ro",
-    default => 1,
-);
-
 sub BUILD {
     my ($self, $args) = @_;
-    my $default_watcher = $self->watcher ? $self->create_watcher('' => $self->watcher, type => 'default') : undef;
 
-    $self->_xs_init($self->hosts, $self->timeout, $default_watcher, $args->{client_id});
+    $self->ignore_session_events($args->{ignore_session_events})
+        if exists $args->{ignore_session_events};
+    my $watcher = $self->watcher && do {
+        $self->create_watcher('' => $self->watcher, type => 'default');
+    };
 
-    if (my $auth = $self->authentication) {
-        $self->add_auth(@$auth);
-    }
+    $self->_xs_init($self->hosts, $self->timeout, $watcher, $args->{client_id});
+    $self->add_auth(@{$self->authentication||[]}) if $self->authentication;
 }
 
 =head1 METHODS
