@@ -9,6 +9,13 @@ use 5.10.1;
 
 our $VERSION = '0.0.14';
 
+BEGIN {
+    if (my $trace_var = $ENV{PERL_ZOOKEEPER_TRACE}) {
+        my ($level, $file) = split /=/, $trace_var;
+        __PACKAGE__->trace($level, $file);
+    }
+}
+
 =head1 NAME
 
 ZooKeeper - Perl bindings for Apache ZooKeeper
@@ -462,6 +469,17 @@ around set_acl => sub {
     my ($orig, $self, $path, $acl, %extra) = @_;
     return $self->$orig($path, $acl, $extra{version}//-1);
 };
+
+=head2 trace
+
+Set the tracing level for the ZooKeeper client. Can also be set using the PERL_ZOOKEEPER_TRACE environmental variable, where PERL_ZOOKEEPER_TRACE=$level=$file traces to $file with debug level $level.
+
+    $zk->trace($level, $file)
+
+        REQUIRED $level
+        OPTIONAL $file
+
+=cut
 
 =head1 CAVEATS
 

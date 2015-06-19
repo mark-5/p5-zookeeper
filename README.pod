@@ -335,6 +335,18 @@ Set ACls for a node at the given path. Throws a ZooKeeper::Error on failure.
 
 =cut
 
+=head2 trace
+
+Set the tracing level for the ZooKeeper client. Can also be set using the PERL_ZOOKEEPER_TRACE environmental variable, where PERL_ZOOKEEPER_TRACE=$level=$file traces to $file with debug level $level.
+
+    $zk->trace($level, $file)
+
+        REQUIRED $level
+        OPTIONAL $file
+
+
+=cut
+
 =head1 CAVEATS
 
 =head2 Forking

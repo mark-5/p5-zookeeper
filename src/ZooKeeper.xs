@@ -4,6 +4,7 @@
 #include "XSUB.h"
 #include "ppport.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include <pzk.h>
@@ -21,6 +22,17 @@ BOOT:
     zoo_set_debug_level(0);
     zoo_set_log_stream(NULL);
 }
+
+void
+trace(SV* self, int level, const char* path=NULL)
+    PPCODE:
+        if (level > ZOO_LOG_LEVEL_DEBUG) {
+            level = ZOO_LOG_LEVEL_DEBUG;
+        }
+        zoo_set_debug_level(level);
+
+        FILE* stream = path ? fopen(path, "a") : NULL;
+        zoo_set_log_stream(stream);
 
 void
 _xs_init(self, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
