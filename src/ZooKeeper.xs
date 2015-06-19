@@ -33,7 +33,7 @@ _xs_init(self, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
     PPCODE:
         if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
 
-        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
         watcher_fn cb = watcher ? pzk_dispatcher_cb : NULL;
         zhandle_t* handle = zookeeper_init(hosts, cb, recv_timeout, clientid, (void*) watcher, flags);
         if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", hosts, strerror(errno));
@@ -44,7 +44,7 @@ _xs_init(self, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
 void
 DESTROY(SV* self)
     PPCODE:
-        pzk_t* pzk = (pzk_t*) unsafe_tied_object_to_ptr(self);
+        pzk_t* pzk = (pzk_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (pzk) {
             if (pzk->handle) zookeeper_close(pzk->handle);
             destroy_pzk(pzk);
@@ -60,7 +60,7 @@ state(pzk_t* pzk)
 void
 add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, SV* _watcher=NULL)
     PPCODE:
-        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
         void_completion_t cb = watcher ? pzk_dispatcher_auth_cb : NULL;
         int rc = zoo_add_auth(pzk->handle, scheme, credential, strlen(credential), cb, (void*) watcher);
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error trying to authenticate: %s", zerror(rc));
@@ -88,7 +88,7 @@ exists(pzk_t* pzk, char* path, SV* _watcher=NULL)
     CODE:
         int rc;
         struct Stat stat; Zero(&stat, 1, struct Stat);
-        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
         if (watcher) {
             rc = zoo_wexists(pzk->handle, path, pzk_dispatcher_cb, (void*) watcher, &stat);
         } else {
@@ -110,7 +110,7 @@ get_children(pzk_t* pzk, char* path, SV* _watcher=NULL)
     PPCODE:
         int rc;
         struct String_vector strings; Zero(&strings, 1, struct String_vector);
-        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
         if (watcher) {
             rc = zoo_wget_children(pzk->handle, path, pzk_dispatcher_cb, (void*) watcher, &strings);
         } else {
@@ -135,7 +135,7 @@ get(pzk_t* pzk, char* path, int buffer_len, SV* _watcher=NULL)
         int rc;
         char* buffer; Newxz(buffer, buffer_len + 1, char);
         struct Stat stat; Zero(&stat, 1, struct Stat);
-        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(_watcher);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
         if (watcher) {
             rc = zoo_wget(pzk->handle, path, pzk_dispatcher_cb, watcher, buffer, &buffer_len, &stat);
         } else {
@@ -213,7 +213,7 @@ _xs_init(SV* self)
 void
 DESTROY(SV* self)
     PPCODE:
-        pzk_dequeue_t* channel = (pzk_dequeue_t*) unsafe_tied_object_to_ptr(self);
+        pzk_dequeue_t* channel = (pzk_dequeue_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (channel) destroy_pzk_dequeue(channel);
 
 int
@@ -257,7 +257,7 @@ recv_event(pzk_dispatcher_t* dispatcher)
 void
 DESTROY(SV* self)
     PPCODE:
-        pzk_dispatcher_t* dispatcher = (pzk_dispatcher_t*) unsafe_tied_object_to_ptr(self);
+        pzk_dispatcher_t* dispatcher = (pzk_dispatcher_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (dispatcher) {
             pzk_event_t* event;
             while ((event = (pzk_event_t*) pzk_dequeue_shift(dispatcher->channel))) {
@@ -293,7 +293,7 @@ read_pipe(pzk_pipe_dispatcher_t* dispatcher)
 void
 DESTROY(SV* self)
     PPCODE:
-        pzk_pipe_dispatcher_t* dispatcher = (pzk_pipe_dispatcher_t*) unsafe_tied_object_to_ptr(self);
+        pzk_pipe_dispatcher_t* dispatcher = (pzk_pipe_dispatcher_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (dispatcher) destroy_pzk_pipe_dispatcher(dispatcher);
 
 
@@ -310,7 +310,7 @@ _xs_init(SV* self, pzk_dequeue_t* channel, interrupt_fn func, void* arg)
 void
 DESTROY(SV* self)
     PPCODE:
-        pzk_interrupt_dispatcher_t* dispatcher = (pzk_interrupt_dispatcher_t*) unsafe_tied_object_to_ptr(self);
+        pzk_interrupt_dispatcher_t* dispatcher = (pzk_interrupt_dispatcher_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (dispatcher) destroy_pzk_interrupt_dispatcher(dispatcher);
 
 
@@ -334,7 +334,7 @@ trigger(pzk_watcher_t* watcher, const char* path, int state, int type)
 void
 DESTROY(SV* self)
     PPCODE:
-        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(self);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (watcher) {
             SvREFCNT_dec(watcher->event_ctx);
             Safefree(watcher);
