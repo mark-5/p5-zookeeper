@@ -130,13 +130,29 @@ has timeout => (
 
 =head2 watcher
 
-A subroutine reference to be called by a default watcher for ZooKeeper session events.
+A subroutine reference to be called by a default watcher for ZooKeeper session events. This attribute is read/write.
 
 =cut
 
 has watcher => (
-    is => 'ro',
+    is => 'rw',
 );
+
+after watcher => sub {
+    # this probably makes more sense as a trigger
+    #  but triggers get run before BUILD
+    #  which is a problem for watch instantiation
+    return if @_ == 1;
+    my ($self, $code) = @_;
+    my ($path, $type) = ('', 'default');
+    my %watcher_args  = (path => $path, type => $type);
+
+    my @old = $self->get_watchers(%watcher_args);
+    my $new = $self->create_watcher($path => $code, type => $type);
+    $self->_set_watcher($new);
+    $self->remove_watcher(%watcher_args, watcher => $_) for @old;
+};
+
 
 =head2 authentication
 
@@ -193,7 +209,12 @@ has _dispatcher_obj => (
     init_arg => undef,
     lazy     => 1,
     builder  => '_build_dispatcher_obj',
-    handles  => [qw(create_watcher wait)],
+    handles  => [qw(
+        create_watcher
+        get_watchers
+        remove_watcher
+        wait
+    )],
 );
 
 sub _build_dispatcher_obj {
@@ -223,7 +244,7 @@ has ignore_session_events => (
 
 sub BUILD {
     my ($self, $args) = @_;
-    my $default_watcher = $self->watcher ? $self->create_watcher('' => $self->watcher, type => 'default') : undef;
+    my $default_watcher = $args->{watcher} ? $self->create_watcher('' => $args->{watcher}, type => 'default') : undef;
 
     $self->_xs_init($self->hosts, $self->timeout, $default_watcher, $args->{client_id});
 

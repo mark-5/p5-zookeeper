@@ -50,6 +50,13 @@ DESTROY(SV* self)
             destroy_pzk(pzk);
         }
 
+void
+_set_watcher(pzk_t* pzk, SV* _watcher=NULL)
+    PPCODE:
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
+        zoo_set_watcher(pzk->handle, pzk_dispatcher_cb);
+        zoo_set_context(pzk->handle, (void*) watcher);
+
 int
 state(pzk_t* pzk)
     CODE:

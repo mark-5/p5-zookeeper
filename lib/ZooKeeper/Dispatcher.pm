@@ -101,7 +101,7 @@ sub create_watcher {
             return if $sess_event and not $default_watch;
         }
         if (not $sess_event and not $default_watch) {
-            $self->_remove_watcher(
+            $self->remove_watcher(
                 path    => $path,
                 type    => $type,
                 watcher => $watcher,
@@ -128,7 +128,13 @@ sub _add_watcher {
     $self->watchers->{$path}{$type}{$watcher} = $watcher;
 }
 
-sub _remove_watcher {
+sub get_watchers {
+    my ($self, %args) = @_;
+    my ($path, $type) = @args{qw(path type)};
+    return values %{$self->watchers->{$path}{$type}||{}};
+}
+
+sub remove_watcher {
     my ($self, %args) = @_;
     my ($path, $type, $watcher) = @args{qw(path type watcher)};
     delete $self->watchers->{$path}{$type}{$watcher};
