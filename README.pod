@@ -111,7 +111,7 @@ The session timout used for the ZooKeeper connection.
 
 =head2 watcher
 
-A subroutine reference to be called by a default watcher for ZooKeeper session events. This attribute is read/write.
+A subroutine reference to be called by the default watcher for ZooKeeper session events. This attribute is read/write.
 
 
 =cut

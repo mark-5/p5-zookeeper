@@ -7,7 +7,7 @@ use Module::Runtime qw(require_module);
 use Moo;
 use 5.10.1;
 
-our $VERSION = '0.0.15';
+our $VERSION = '0.0.16';
 
 BEGIN {
     if (my $trace_var = $ENV{PERL_ZOOKEEPER_TRACE}) {
@@ -137,7 +137,7 @@ has timeout => (
 
 =head2 watcher
 
-A subroutine reference to be called by a default watcher for ZooKeeper session events. This attribute is read/write.
+A subroutine reference to be called by the default watcher for ZooKeeper session events. This attribute is read/write.
 
 =cut
 
@@ -251,7 +251,7 @@ has ignore_session_events => (
 
 sub BUILD {
     my ($self, $args) = @_;
-    my $default_watcher = $args->{watcher} ? $self->create_watcher('' => $args->{watcher}, type => 'default') : undef;
+    my $default_watcher = $self->watcher ? $self->create_watcher('' => $self->watcher, type => 'default') : undef;
 
     $self->_xs_init($self->hosts, $self->timeout, $default_watcher, $args->{client_id});
 

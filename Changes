@@ -1,3 +1,6 @@
+0.0.16 - 2015-6-19
+  - remove carmel setup from dist
+
 0.0.15 - 2015-6-19
   - fix build issues for threaded perls
   - fix segfaults when setting multiple watchers on same path and event
