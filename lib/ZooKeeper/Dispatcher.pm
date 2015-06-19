@@ -3,7 +3,6 @@ use ZooKeeper::XS;
 use ZooKeeper::Channel;
 use ZooKeeper::Constants qw(ZOO_SESSION_EVENT);
 use ZooKeeper::Watcher;
-use AnyEvent;
 use Scalar::Util qw(weaken);
 use Moo;
 
@@ -189,17 +188,19 @@ Can optionally be passed a timeout(specified in seconds), which will cause wait 
 
 sub wait {
     my ($self, $time) = @_;
+    require AnyEvent;
 
     my $cv = AnyEvent->condvar;
     my $w; $w = AnyEvent->timer(after => $time, cb => sub { $cv->send }) if $time;
 
+    my $dispatch_cb = $self->dispatch_cb;
     $self->dispatch_cb(sub {
-        my $event = $self->dispatch_event;
+        my $event = $dispatch_cb->();
         $cv->send($event);
     });
     my $event = $cv->recv;
 
-    $self->dispatch_cb(sub { $self->dispatch_event });
+    $self->dispatch_cb($dispatch_cb);
 
     weaken($self);
     return $event;

@@ -1,10 +1,9 @@
 package ZooKeeper::XUnit::Role::Dispatcher;
-use AnyEvent;
 use Test::LeakTrace;
 use Try::Tiny;
 use Test::Class::Moose::Role;
 use ZooKeeper::Constants qw(ZOO_CHILD_EVENT ZOO_SESSION_EVENT);
-requires qw(implementation);
+requires qw(new_future new_dispatcher);
 
 sub timeout {
     my ($time, $code) = @_;
@@ -23,26 +22,29 @@ sub timeout {
 
 sub test_startup {
     my ($self) = @_;
-    my $impl = $self->implementation;
-    eval "require $impl; 1" or die "Could not require dispatcher implementation '$impl': $@";
+    try {
+        $self->new_dispatcher;
+    } catch {
+        $self->test_skip("Could not create dispatcher: $_");
+    };
 }
 
 sub test_dispatcher {
     my ($self) = @_;
 
-    my $dispatcher = $self->implementation->new;
+    my $dispatcher = $self->new_dispatcher;
 
-    my $cv = AnyEvent->condvar;
-    $dispatcher->create_watcher('/' => sub{ $cv->send(shift) }, type => "test");
+    my $f = $self->new_future;
+    $dispatcher->create_watcher('/' => sub{ $f->done(shift) }, type => "test");
     my $event = {type => 1, state => 2, path => 'test-path'};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
 
-    my $rv; timeout 1, sub { $rv = $cv->recv };
+    my $rv; timeout 1, sub { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with event";
 
 
-    $cv = AnyEvent->condvar;
-    $dispatcher->create_watcher("/second" => sub{ $cv->send(shift) }, type => "second-test");
+    $f = $self->new_future;
+    $dispatcher->create_watcher("/second" => sub{ $f->done(shift) }, type => "second-test");
     $event = {type => 2, state => 3, path => "second-test-path"};
     $dispatcher->trigger_event(
         path  => "/second",
@@ -50,99 +52,99 @@ sub test_dispatcher {
         event => $event
     );
 
-    timeout 1, sub { $rv = $cv->recv };
+    timeout 1, sub { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called second watcher with event";
 }
 
 sub test_leaks {
     my ($self) = @_;
-    no_leaks_ok { $self->implementation->new } 'no leaks constructing dispatcher';
+    no_leaks_ok { $self->new_dispatcher } 'no leaks constructing dispatcher';
 
-    my $dispatcher = $self->implementation->new;
+    my $dispatcher = $self->new_dispatcher;
     no_leaks_ok {
-        my $cv = AnyEvent->condvar;
-        $dispatcher->create_watcher("/" => sub{ $cv->send }, type => "test");
+        my $f = $self->new_future;
+        $dispatcher->create_watcher("/" => sub{ $f->done }, type => "test");
         $dispatcher->trigger_event(path => "/", type => "test");
-        timeout 1, sub { $cv->recv };
+        timeout 1, sub { $f->get };
 
-        $cv = AnyEvent->condvar;
-        $dispatcher->create_watcher("/second" => sub{ $cv->send }, type => "second-test");
+        $f = $self->new_future;
+        $dispatcher->create_watcher("/second" => sub{ $f->done }, type => "second-test");
         $dispatcher->trigger_event(path => "/second", type => "second-test");
-        timeout 1, sub { $cv->recv };
+        timeout 1, sub { $f->get };
     } 'no leaks sending events through dispatcher';
 }
 
 sub test_session_events {
     my ($self) = @_;
-    my $dispatcher = $self->implementation->new(ignore_session_events => 0);
+    my $dispatcher = $self->new_dispatcher(ignore_session_events => 0);
 
-    my $cv = AnyEvent->condvar;
-    $dispatcher->create_watcher("/" => sub{ $cv->send(shift) }, type => "test");
+    my $f = $self->new_future;
+    $dispatcher->create_watcher("/" => sub{ $f->done(shift) }, type => "test");
 
     my $event = {type => ZOO_SESSION_EVENT, state => 2, path => "/"};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    my $rv; timeout 1, sub { $rv = $cv->recv };
+    my $rv; timeout 1, sub { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with session event";
 
-    $cv = AnyEvent->condvar;
+    $f = $self->new_future;
     $event->{type} = ZOO_CHILD_EVENT;
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    timeout 1, sub { $rv = $cv->recv };
+    timeout 1, sub { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with additional watcher event";
 }
 
 sub test_ignore_session_events {
     my ($self) = @_;
-    my $dispatcher = $self->implementation->new(ignore_session_events => 1);
+    my $dispatcher = $self->new_dispatcher(ignore_session_events => 1);
 
-    my $cv = AnyEvent->condvar;
-    $dispatcher->create_watcher("/" => sub{ $cv->send(shift) }, type => "test");
+    my $f = $self->new_future;
+    $dispatcher->create_watcher("/" => sub{ $f->done(shift) }, type => "test");
 
     my $event = {type => ZOO_SESSION_EVENT, state => 2, path => "/"};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    my $rv; timeout 1, sub { $rv = $cv->recv };
+    my $rv; timeout 1, sub { $rv = $f->get };
     is_deeply $rv, undef, "dispatcher ignored session event";
 
-    $cv = AnyEvent->condvar;
+    $f = $self->new_future;
     $event->{type} = ZOO_CHILD_EVENT;
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    timeout 1, sub { $rv = $cv->recv };
+    timeout 1, sub { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with watcher event";
 }
 
 sub test_duplicate_watchers {
     my ($self) = @_;
-    my $dispatcher = $self->implementation->new;
+    my $dispatcher = $self->new_dispatcher;
 
-    my $cv1 = AnyEvent->condvar;
-    $dispatcher->create_watcher('/' => sub{ $cv1->send(shift) }, type => "test");
-    my $cv2 = AnyEvent->condvar;
-    $dispatcher->create_watcher("/" => sub{ $cv2->send(shift) }, type => "test");
+    my $f1 = $self->new_future;
+    $dispatcher->create_watcher('/' => sub{ $f1->done(shift) }, type => "test");
+    my $f2 = $self->new_future;
+    $dispatcher->create_watcher("/" => sub{ $f2->done(shift) }, type => "test");
 
     my $event = {type => 1, state => 2, path => 'test-path'};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
 
-    my $rv; timeout 1, sub { $rv = $cv1->recv };
+    my $rv; timeout 1, sub { $rv = $f1->get };
     is_deeply $rv, $event, "dispatcher called first watcher with event";
 
-    $rv = undef; timeout 1, sub { $rv = $cv2->recv };
+    $rv = undef; timeout 1, sub { $rv = $f2->get };
     is_deeply $rv, $event, "dispatcher called duplicate watcher with event";
 }
 
 sub test_duplicate_watchers_leaks {
     my ($self) = @_;
-    my $dispatcher = $self->implementation->new;
+    my $dispatcher = $self->new_dispatcher;
 
     no_leaks_ok {
-        my $cv1 = AnyEvent->condvar;
-        $dispatcher->create_watcher("/" => sub{ $cv1->send }, type => "test");
+        my $f1 = $self->new_future;
+        $dispatcher->create_watcher("/" => sub{ $f1->done }, type => "test");
 
-        my $cv2 = AnyEvent->condvar;
-        $dispatcher->create_watcher("/" => sub{ $cv2->send }, type => "test");
+        my $f2 = $self->new_future;
+        $dispatcher->create_watcher("/" => sub{ $f2->done }, type => "test");
 
         $dispatcher->trigger_event(path => "/", type => "test");
-        timeout 1, sub { $cv1->recv };
-        timeout 1, sub { $cv2->recv };
+        timeout 1, sub { $f1->get };
+        timeout 1, sub { $f2->get };
     } 'no leaks with duplicate watchers';
 }
 

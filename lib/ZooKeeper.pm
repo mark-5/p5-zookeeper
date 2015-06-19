@@ -226,14 +226,21 @@ has _dispatcher_obj => (
 
 sub _build_dispatcher_obj {
     my ($self) = @_;
-    my $type  = lc $self->dispatcher;
-    my $class = $type eq 'anyevent'  ? 'ZooKeeper::Dispatcher::AnyEvent'
 
-              : $type eq 'interrupt' ? 'ZooKeeper::Dispatcher::Interrupt'
-              : croak "Unrecognized dispatcher type: $type";
-
+    my ($class, @args) = @_;
+    my $dispatcher = $self->dispatcher;
+    if (ref $dispatcher) {
+        ($class, @args) = @$dispatcher;
+    } else {
+        $class = $dispatcher;
+    }
+    $class = "ZooKeeper::Dispatcher::$class" unless s/^\+//;
     require_module($class);
-    return $class->new(ignore_session_events => $self->ignore_session_events);
+
+    return $class->new(
+        ignore_session_events => $self->ignore_session_events,
+        @args,
+    );
 }
 
 =head2 ignore_session_events
