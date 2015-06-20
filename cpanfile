@@ -21,8 +21,12 @@ feature 'async-interrupt', 'Async::Interrupt support' => sub {
 feature 'io-async', 'IO::Async support' => sub {
     recommends 'IO::Async::Handle';
 };
+feature 'poe', 'POE support' => sub {
+    recommends 'POE';
+};
 
 test_requires 'AnyEvent::Future';
+test_requires 'POE::Future';
 test_requires 'Test::Class::Moose', '0.55';
 test_requires 'Test::LeakTrace';
 test_requires 'Test::More';

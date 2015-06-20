@@ -12,6 +12,7 @@ our %dispatchers = (
         require IO::Async::Loop;
         $_[0]->new(loop => IO::Async::Loop->new);
     },
+    'ZooKeeper::Dispatcher::POE' => sub { shift->new },
 );
 
 sub test_leaks {
