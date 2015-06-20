@@ -4,6 +4,24 @@ use Scalar::Util qw(weaken);
 use Moo;
 extends 'ZooKeeper::Dispatcher::Pipe';
 
+=head1 NAME
+
+ZooKeeper::Dispatcher::IOAsync
+
+=head1 DESCRIPTION
+
+A ZooKeeper::Dispatcher implementation, and subclass of ZooKeeper::Dispatcher::Pipe.
+
+Creates an IO::Async::Handle to handle reading from the pipe.
+
+=head1 ATTRIBUTES
+
+=head2 loop
+
+The IO::Async::Loop to use for event handling.
+
+=cut
+
 has loop => (
     is       => 'ro',
     required => 1,

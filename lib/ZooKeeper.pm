@@ -106,6 +106,23 @@ ZooKeeper writes to a Unix pipe with an attached AnyEvent I/O watcher. This mean
 
 ZooKeeper uses Async::Interrupt callbacks. This means the perl interpreter will be safely interrupted(waits for the current op to finish) in order to execute the corresponding perl callback. See Async::Interrupt for more details on how callbacks are executed. Be aware that this does not interrupt system calls(such as select) and XS code. This means if your code is blocking on a select(such as during an AnyEvent recv), the interrupt callback will not execute until the call has finished.
 
+=item IOAsync
+
+ZooKeeper writes to a Unix pipe with an attached IO::Async::Handle.
+
+The IO::Async dispatcher requires an IO::Async::Loop, and needs to be constructed manually
+
+    my $loop = IO::Async::Loop->new;
+    my $disp = ZooKeeper::Dispatcher::IOAsync->new(loop => $loop);
+    my $zk = ZooKeeper->new(
+        hosts      => 'localhost:2181',
+        dispatcher => $disp,
+    );
+
+=item POE
+
+ZooKeeper writes to a Unix pipe with an attached POE::Session.
+
 =back
 
 =head1 ATTRIBUTES

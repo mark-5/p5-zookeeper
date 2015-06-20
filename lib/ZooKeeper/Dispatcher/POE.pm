@@ -4,6 +4,18 @@ use Scalar::Util qw(weaken);
 use Moo;
 extends 'ZooKeeper::Dispatcher::Pipe';
 
+=head1 NAME
+
+ZooKeeper::Dispatcher::POE
+
+=head1 DESCRIPTION
+
+A ZooKeeper::Dispatcher implementation, and subclass of ZooKeeper::Dispatcher::Pipe.
+
+Creates a POE::Session to handle reading from the pipe.
+
+=cut
+
 has fh => (
     is      => 'ro',
     lazy    => 1,
@@ -15,20 +27,59 @@ sub _build_fh {
     return $fh;
 }
 
+has session => (
+    is      => 'ro',
+    writer  => 'set_session',
+    clearer => 'clear_session',
+);
+
+sub wait {
+    my ($self, $time) = @_;
+    require POE::Future;
+
+    my $future  = POE::Future->new;
+    my $timeout = $time && do {
+        POE::Future->new_delay($time)
+                   ->then(sub { $future->done })
+    };
+
+    my $dispatch_cb = $self->dispatch_cb;
+    $self->dispatch_cb(sub {
+        my $event = $dispatch_cb->();
+        $future->done($event);
+    });
+    my $event = $future->get;
+
+    $self->dispatch_cb($dispatch_cb);
+
+    weaken($self);
+    return $event;
+}
+
 sub BUILD {
     my ($self) = @_;
     weaken($self);
 
     my %states = (
         _start => sub {
-            my $kernel = $_[KERNEL];
-            $kernel->select_read($self->fh, 'dispatch');
+            $_[KERNEL]->select_read($self->fh, 'dispatch');
         },
-        dispatch => sub { $self->dispatch_cb->() },
+        dispatch => sub {
+            $self->dispatch_cb->();
+        },
+        shutdown => sub {
+            $_[KERNEL]->select_read($self->fh);
+        }
     );
 
-    POE::Session->create(inline_states => \%states);
-    POE::Kernel->run();
+    my $session = POE::Session->create(inline_states => \%states);
+    $self->set_session($session);
+}
+
+sub DEMOLISH {
+    my ($self) = @_;
+    POE::Kernel->call($self->session, 'shutdown');
+    $self->clear_session;
 }
 
 1;

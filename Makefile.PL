@@ -16,6 +16,7 @@ cc_include_paths 'include';
 cc_libs '-lzookeeper_mt', '-lpthread';
 cc_src_paths 'src';
 
+author_tests('xt');
 clean_files 'MANIFEST', 'META.*';
 
 cpanfile;

@@ -3,6 +3,7 @@ use ZooKeeper::XS;
 use ZooKeeper::Channel;
 use ZooKeeper::Constants qw(ZOO_SESSION_EVENT);
 use ZooKeeper::Watcher;
+use AnyEvent;
 use Scalar::Util qw(weaken);
 use Moo;
 
@@ -12,7 +13,7 @@ ZooKeeper::Dispatcher
 
 =head1 DESCRIPTION
 
-A parent class for event dispatchers to inherit from. Dispatchers directly handle callbacks for ZooKeeper C library, and manage the lifecycle of ZooKeeper::Watcher's.
+A parent class for event dispatchers to inherit from. Dispatchers directly handle callbacks for ZooKeeper the C library, and manage the lifecycle of ZooKeeper::Watcher's.
 
 =head1 ATTRIBUTES
 
@@ -188,7 +189,6 @@ Can optionally be passed a timeout(specified in seconds), which will cause wait 
 
 sub wait {
     my ($self, $time) = @_;
-    require AnyEvent;
 
     my $cv = AnyEvent->condvar;
     my $w; $w = AnyEvent->timer(after => $time, cb => sub { $cv->send }) if $time;
