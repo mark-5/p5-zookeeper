@@ -7,7 +7,7 @@ use Module::Runtime qw(require_module);
 use Moo;
 use 5.10.1;
 
-our $VERSION = '0.0.16';
+our $VERSION = '0.0.17';
 
 BEGIN {
     if (my $trace_var = $ENV{PERL_ZOOKEEPER_TRACE}) {
@@ -219,7 +219,11 @@ Valid types include:
 
 =item Interrupt
 
+=item POE
+
 =back
+
+Instead of a string, a dispatcher object can be passed directly. This is necessary if the dispatcher has required attributes(as is the case for ZooKeeper::Dispatcher::IOAsync).
 
 =cut
 
