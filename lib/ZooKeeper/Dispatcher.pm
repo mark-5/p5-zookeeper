@@ -5,6 +5,7 @@ use ZooKeeper::Constants qw(ZOO_SESSION_EVENT);
 use ZooKeeper::Watcher;
 use AnyEvent;
 use Scalar::Util qw(weaken);
+use Scope::Guard qw(guard);
 use Moo;
 
 =head1 NAME
@@ -162,6 +163,12 @@ sub dispatch_event {
     }
 }
 
+around send_event => sub {
+    my ($orig, $self, $event, $watcher) = @_;
+    my ($type, $state, $path) = @{$event}{qw(type state path)};
+    $self->$orig($type//0, $state//0, $path//'', $watcher);
+};
+
 =head2 trigger_event
 
 Manually trigger an event on a ZooKeeper::Watch.
@@ -173,7 +180,7 @@ sub trigger_event {
     my ($event, $path, $type) = @args{qw(event path type)};
 
     my @watchers = values %{$self->watchers->{$path}{$type}||{}};
-    $_->trigger($event//{}) for @watchers;
+    $self->send_event($event//{}, $_) for @watchers;
 }
 
 =head2 wait
@@ -191,16 +198,17 @@ sub wait {
     my ($self, $time) = @_;
 
     my $cv = AnyEvent->condvar;
-    my $w; $w = AnyEvent->timer(after => $time, cb => sub { $cv->send }) if $time;
+    my $w  = $time && do {
+        AnyEvent->timer(after => $time, cb => sub { $cv->send })
+    };
 
     my $dispatch_cb = $self->dispatch_cb;
+    my $guard       = guard { $self->dispatch_cb($dispatch_cb) };
     $self->dispatch_cb(sub {
         my $event = $dispatch_cb->();
         $cv->send($event);
     });
     my $event = $cv->recv;
-
-    $self->dispatch_cb($dispatch_cb);
 
     weaken($self);
     return $event;

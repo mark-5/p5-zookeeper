@@ -1,6 +1,9 @@
 package ZooKeeper::XUnit::Dispatcher::IOAsync;
 use Try::Tiny;
 use Test::Class::Moose;
+with 'ZooKeeper::XUnit::Role::Dispatcher';
+with 'ZooKeeper::XUnit::Role::CheckLeaks';
+with 'ZooKeeper::XUnit::Role::CheckWait';
 
 sub test_startup {
     my ($self) = @_;
@@ -20,12 +23,16 @@ has loop => (
 
 sub new_future { shift->loop->new_future }
 
+sub new_delay {
+    my ($self, $after, $cb) = @_;
+    my $loop = $self->loop;
+    return $loop->delay_future(after => $after)
+                ->on_done($cb);
+}
+
 sub new_dispatcher {
     my ($self, @args) = @_;
     return ZooKeeper::Dispatcher::IOAsync->new(loop => $self->loop, @args);
 }
 
-
-with 'ZooKeeper::XUnit::Role::Dispatcher';
-with 'ZooKeeper::XUnit::Role::LeakChecker';
 1;

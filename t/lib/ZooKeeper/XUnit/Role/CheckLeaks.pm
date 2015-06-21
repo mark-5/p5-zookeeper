@@ -1,4 +1,4 @@
-package ZooKeeper::XUnit::Role::LeakChecker;
+package ZooKeeper::XUnit::Role::CheckLeaks;
 use Test::LeakTrace;
 use ZooKeeper::XUnit::Utils qw(timeout);
 use Test::Class::Moose::Role;

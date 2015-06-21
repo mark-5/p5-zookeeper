@@ -1,6 +1,7 @@
 package ZooKeeper::Dispatcher::IOAsync;
 use IO::Async::Handle;
 use Scalar::Util qw(weaken);
+use Scope::Guard qw(guard);
 use Moo;
 extends 'ZooKeeper::Dispatcher::Pipe';
 
@@ -48,17 +49,24 @@ sub wait {
     my $loop   = $self->loop;
     my $future = $loop->new_future;
 
-    $loop->watch_time(after => $time, code => sub { $future->done })
-        if $time;
+    my $time_id = $time && do {
+        $loop->watch_time(
+            after => $time,
+            code  => sub { $future->done unless $future->is_done },
+        )
+    };
 
     my $dispatch_cb = $self->dispatch_cb;
+    my $guard       = guard {
+        $future->cancel;
+        $loop->unwatch_time($time_id) if defined $time_id;
+        $self->dispatch_cb($dispatch_cb);
+    };
     $self->dispatch_cb(sub {
         my $event = $dispatch_cb->();
-        $future->done($event);
+        $future->done($event) unless $future->is_done;
     });
     my $event = $future->get;
-
-    $self->dispatch_cb($dispatch_cb);
 
     weaken($self);
     return $event;

@@ -31,10 +31,19 @@ sub _build_interrupt {
     return $interrupt;
 }
 
+sub ticker {
+    my ($self, $tick) = @_;
+    $tick ||= 0.1;
+    return AnyEvent->timer(
+        after    => $tick,
+        interval => $tick,
+        cb       => sub { },
+    );
+}
+
 around wait => sub {
     my ($orig, $self, @args) = @_;
-    my $tick   = 0.1;
-    my $ticker = AnyEvent->timer(after => $tick, interval => $tick, cb => sub {});
+    my $ticker = $self->ticker;
     $self->$orig(@args);
 };
 

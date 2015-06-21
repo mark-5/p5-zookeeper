@@ -273,6 +273,19 @@ recv_event(pzk_dispatcher_t* dispatcher)
     OUTPUT:
         RETVAL
 
+int
+send_event(dispatcher, type, state, path, watcher)
+        pzk_dispatcher_t* dispatcher
+        int               type
+        int               state
+        const char*       path
+        pzk_watcher_t*    watcher
+    CODE:
+        if (!dispatcher) Perl_croak(aTHX_ "dispatcher has not yet been initialized by ZooKeeper::Dispatcher");
+        pzk_dispatcher_cb(NULL, type, state, path, (void*) watcher);
+    OUTPUT:
+        RETVAL
+
 void
 DESTROY(SV* self)
     PPCODE:

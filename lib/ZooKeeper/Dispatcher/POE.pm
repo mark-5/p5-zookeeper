@@ -1,6 +1,7 @@
 package ZooKeeper::Dispatcher::POE;
 use POE;
 use Scalar::Util qw(weaken);
+use Scope::Guard qw(guard);
 use Moo;
 extends 'ZooKeeper::Dispatcher::Pipe';
 
@@ -44,13 +45,16 @@ sub wait {
     };
 
     my $dispatch_cb = $self->dispatch_cb;
+    my $guard       = guard {
+        $future->cancel;
+        $timeout->cancel if $timeout;
+        $self->dispatch_cb($dispatch_cb);
+    };
     $self->dispatch_cb(sub {
         my $event = $dispatch_cb->();
         $future->done($event);
     });
     my $event = $future->get;
-
-    $self->dispatch_cb($dispatch_cb);
 
     weaken($self);
     return $event;
