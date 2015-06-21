@@ -20,13 +20,14 @@ feature 'poe', 'POE support' => sub {
     recommends 'POE::Future';
 };
 
+author_requires 'Async::Interrupt';
 author_requires 'Devel::CheckLib';
+author_requires 'FindBin::libs';
+author_requires 'IO::Async::Handle';
 author_requires 'Module::Install::AuthorTests';
 author_requires 'Module::Install::CPANfile';
 author_requires 'Module::Install::ReadmePodFromPod';
 author_requires 'Module::Install::XSUtil';
-author_requires 'Async::Interrupt';
-author_requires 'IO::Async::Handle';
 author_requires 'POE';
 author_requires 'POE::Future';
 
