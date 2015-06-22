@@ -7,7 +7,7 @@ use Module::Runtime qw(require_module);
 use Moo;
 use 5.10.1;
 
-our $VERSION = '0.0.17';
+our $VERSION = '0.0.18';
 
 BEGIN {
     if (my $trace_var = $ENV{PERL_ZOOKEEPER_TRACE}) {
