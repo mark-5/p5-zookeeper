@@ -1,8 +1,7 @@
 package ZooKeeper::XUnit::Role::Dispatcher;
 use Test::LeakTrace;
-use Try::Tiny;
 use ZooKeeper::Constants qw(ZOO_CHILD_EVENT ZOO_SESSION_EVENT);
-use ZooKeeper::XUnit::Utils qw(timeout);
+use ZooKeeper::Test::Utils qw(timeout);
 use Test::Class::Moose::Role;
 requires qw(new_future new_dispatcher);
 
@@ -16,7 +15,7 @@ sub test_dispatcher {
     my $event = {type => 1, state => 2, path => 'test-path'};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
 
-    my $rv; timeout 1, sub { $rv = $f->get };
+    my $rv; timeout { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with event";
 
 
@@ -29,7 +28,7 @@ sub test_dispatcher {
         event => $event
     );
 
-    timeout 1, sub { $rv = $f->get };
+    timeout { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called second watcher with event";
 }
 
@@ -42,13 +41,13 @@ sub test_session_events {
 
     my $event = {type => ZOO_SESSION_EVENT, state => 2, path => "/"};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    my $rv; timeout 1, sub { $rv = $f->get };
+    my $rv; timeout { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with session event";
 
     $f = $self->new_future;
     $event->{type} = ZOO_CHILD_EVENT;
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    timeout 1, sub { $rv = $f->get };
+    timeout { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with additional watcher event";
 }
 
@@ -61,13 +60,13 @@ sub test_ignore_session_events {
 
     my $event = {type => ZOO_SESSION_EVENT, state => 2, path => "/"};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    my $rv; timeout 1, sub { $rv = $f->get };
+    my $rv; timeout { $rv = $f->get };
     is_deeply $rv, undef, "dispatcher ignored session event";
 
     $f = $self->new_future;
     $event->{type} = ZOO_CHILD_EVENT;
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
-    timeout 1, sub { $rv = $f->get };
+    timeout { $rv = $f->get };
     is_deeply $rv, $event, "dispatcher called watcher with watcher event";
 }
 
@@ -83,10 +82,10 @@ sub test_duplicate_watchers {
     my $event = {type => 1, state => 2, path => 'test-path'};
     $dispatcher->trigger_event(path => "/", type => "test", event => $event);
 
-    my $rv; timeout 1, sub { $rv = $f1->get };
+    my $rv; timeout { $rv = $f1->get };
     is_deeply $rv, $event, "dispatcher called first watcher with event";
 
-    $rv = undef; timeout 1, sub { $rv = $f2->get };
+    $rv = undef; timeout { $rv = $f2->get };
     is_deeply $rv, $event, "dispatcher called duplicate watcher with event";
 }
 

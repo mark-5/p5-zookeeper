@@ -4,7 +4,7 @@ use ZooKeeper::Channel;
 use ZooKeeper::Constants qw(ZOO_SESSION_EVENT);
 use ZooKeeper::Watcher;
 use AnyEvent;
-use Scalar::Util qw(weaken);
+use Scalar::Util qw(blessed weaken);
 use Scope::Guard qw(guard);
 use Moo;
 
@@ -36,9 +36,8 @@ A hashref of all live watchers.
 =cut
 
 has watchers => (
-    is       => 'ro',
-    init_arg => undef,
-    default  => sub { {} },
+    is      => 'ro',
+    default => sub { {} },
 );
 
 =head2 dispatch_cb
@@ -93,6 +92,11 @@ sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
     my $default_watch = $type eq "default";
+
+    if (blessed($cb) and $cb->isa('Future')) {
+        my $future = $cb;
+        $cb = sub { $future->done(shift) };
+    }
 
     my $watcher;
     my $wrapped = sub {

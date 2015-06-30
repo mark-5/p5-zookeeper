@@ -80,10 +80,11 @@ sub BUILD {
     $self->set_session($session);
 }
 
-sub DEMOLISH {
+sub DEMOLISH {}
+before DEMOLISH => sub {
     my ($self) = @_;
     POE::Kernel->call($self->session, 'shutdown');
     $self->clear_session;
-}
+};
 
 1;

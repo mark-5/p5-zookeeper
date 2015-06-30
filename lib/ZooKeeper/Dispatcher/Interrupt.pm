@@ -44,6 +44,7 @@ sub ticker {
 around wait => sub {
     my ($orig, $self, @args) = @_;
     my $ticker = $self->ticker;
+    return $self->dispatch_cb->() if $self->channel->size;
     $self->$orig(@args);
 };
 

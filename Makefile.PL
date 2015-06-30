@@ -19,4 +19,5 @@ cc_src_paths 'src';
 author_tests('xt');
 
 cpanfile;
+clean_files 'META.*';
 WriteAll;
