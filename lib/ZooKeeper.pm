@@ -12,7 +12,7 @@ our $VERSION = '0.0.19';
 BEGIN {
     if (my $trace_var = $ENV{PERL_ZOOKEEPER_TRACE}) {
         my ($level, $file) = split /=/, $trace_var;
-        __PACKAGE__->trace($level, $file);
+        __PACKAGE__->trace($level, ($file)x!! $file);
     }
 }
 
