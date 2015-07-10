@@ -3,6 +3,7 @@ use ZooKeeper;
 use ZooKeeper::Constants;
 use ZooKeeper::Test::Utils;
 use Test::Class::Moose::Role;
+use namespace::clean;
 
 sub test_connection {
     my ($test) = @_;

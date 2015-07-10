@@ -52,6 +52,11 @@ Flags that may be used during node creation.
     ZOO_EPHEMERAL
     ZOO_SEQUENCE
 
+=head2 :acl_ids
+
+    ZOO_ANYONE_ID_UNSAFE
+    ZOO_AUTH_IDS
+
 =head2 :acl_perms
 
 ACL permissions that may be used for a nodes ACLs
@@ -133,6 +138,10 @@ our %EXPORT_TAGS = (
         ZOO_EPHEMERAL
         ZOO_SEQUENCE
     )],
+    'acl_ids' => [qw(
+        ZOO_ANYONE_ID_UNSAFE
+        ZOO_AUTH_IDS
+    )],
     'acl_perms' => [qw(
         ZOO_PERM_READ
         ZOO_PERM_WRITE
@@ -169,6 +178,16 @@ our %EXPORT_TAGS = (
 our @EXPORT       = map {@{$EXPORT_TAGS{$_}}} keys %EXPORT_TAGS;
 our @EXPORT_OK    = @EXPORT;
 $EXPORT_TAGS{all} = \@EXPORT;
+
+use constant ZOO_ANYONE_ID_UNSAFE => (
+    id     => 'anyone',
+    scheme => 'world',
+);
+
+use constant ZOO_AUTH_IDS => (
+    id     => '',
+    scheme => 'auth',
+);
 
 =head1 FUNCTIONS
 

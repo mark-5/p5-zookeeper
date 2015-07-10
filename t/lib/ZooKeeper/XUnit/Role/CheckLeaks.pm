@@ -3,6 +3,7 @@ use Test::LeakTrace;
 use ZooKeeper::Test::Utils qw(timeout);
 use Test::Class::Moose::Role;
 requires qw(new_dispatcher new_future);
+use namespace::clean;
 
 sub test_dispatcher_leaks {
     my ($self) = @_;

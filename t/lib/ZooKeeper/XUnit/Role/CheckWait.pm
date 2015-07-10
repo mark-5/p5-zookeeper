@@ -2,6 +2,7 @@ package ZooKeeper::XUnit::Role::CheckWait;
 use ZooKeeper::Test::Utils qw(timeout);
 use Test::Class::Moose::Role;
 requires qw(new_delay new_dispatcher);
+use namespace::clean;
 
 sub test_wait {
     my ($self) = @_;

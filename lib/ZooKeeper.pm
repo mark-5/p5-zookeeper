@@ -2,7 +2,6 @@ package ZooKeeper;
 use ZooKeeper::XS;
 use ZooKeeper::Constants;
 use Carp;
-use Digest::SHA qw(sha1_base64);
 use Module::Runtime qw(require_module);
 use Moo;
 use 5.10.1;
@@ -330,7 +329,6 @@ around create => sub {
 =head2 add_auth
 
 Add authentication credentials for the session. Will automatically be invoked if the authentication attribute was set during construction.
-If the digest scheme is used, and encoded is not set, then credentials will be automatically hashed with Digest::SHA::sha1_base64.
 
 A ZooKeeper::Error will be thrown if the request could not be made. To determine success or failure authenticating, a watcher must be passed.
 
@@ -341,13 +339,11 @@ A ZooKeeper::Error will be thrown if the request could not be made. To determine
 
         OPTIONAL %extra
             watcher
-            encoded
 
 =cut
 
 around add_auth => sub {
     my ($orig, $self, $scheme, $credentials, %extra) = @_;
-    $credentials = sha1_base64($credentials) if $scheme eq 'digest' and !$extra{encoded};
     my $watcher = $extra{watcher} ? $self->create_watcher('', $extra{watcher}, type => 'add_auth') : undef;
     return $self->$orig($scheme, $credentials, $watcher);
 };

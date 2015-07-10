@@ -2,7 +2,6 @@ configure_requires 'Devel::CheckLib';
 
 requires 'AnyEvent';
 requires 'Carp';
-requires 'Digest::SHA';
 requires 'Module::Runtime';
 requires 'Moo';
 requires 'Scalar::Util';
@@ -23,6 +22,7 @@ feature 'poe', 'POE support' => sub {
 
 author_requires 'Async::Interrupt';
 author_requires 'Devel::CheckLib';
+author_requires 'Digest::SHA';
 author_requires 'FindBin::libs';
 author_requires 'IO::Async::Handle';
 author_requires 'Module::Install::AuthorTests';
@@ -31,8 +31,10 @@ author_requires 'Module::Install::ReadmePodFromPod';
 author_requires 'Module::Install::XSUtil';
 author_requires 'POE';
 author_requires 'POE::Future';
+author_requires 'Test::Fatal';
 
 test_requires 'AnyEvent::Future';
+test_requires 'namespace::clean';
 test_requires 'Test::Class::Moose', '0.55';
 test_requires 'Test::LeakTrace';
 test_requires 'Test::More';

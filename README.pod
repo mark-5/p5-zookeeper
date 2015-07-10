@@ -239,7 +239,6 @@ Create a new node with the given path and data. Returns the path for the newly c
 =head2 add_auth
 
 Add authentication credentials for the session. Will automatically be invoked if the authentication attribute was set during construction.
-If the digest scheme is used, and encoded is not set, then credentials will be automatically hashed with Digest::SHA::sha1_base64.
 
 A ZooKeeper::Error will be thrown if the request could not be made. To determine success or failure authenticating, a watcher must be passed.
 
@@ -250,7 +249,6 @@ A ZooKeeper::Error will be thrown if the request could not be made. To determine
 
         OPTIONAL %extra
             watcher
-            encoded
 
 
 =cut

@@ -92,6 +92,7 @@ sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
     my $type = $args{type};
     my $default_watch = $type eq "default";
+    my $auth_watch    = $type eq "add_auth";
 
     if (blessed($cb) and $cb->isa('Future')) {
         my $future = $cb;
@@ -103,9 +104,11 @@ sub create_watcher {
         my ($event) = @_;
         my $sess_event = $event->{type} == ZOO_SESSION_EVENT;
         if ($self->ignore_session_events) {
-            return if $sess_event and not $default_watch;
+            return if $sess_event and not $default_watch and not $auth_watch;
         }
-        if (not $sess_event and not $default_watch) {
+        if (not $default_watch and not($auth_watch or $sess_event)) {
+            # don't remove default watchers
+            # and don't remove normal watchers on session events
             $self->remove_watcher(
                 path    => $path,
                 type    => $type,
