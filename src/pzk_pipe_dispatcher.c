@@ -4,15 +4,17 @@
 #include <fcntl.h>
 
 static void pzk_pipe_dispatcher_notify(pzk_dispatcher_t*);
-static int pzk_pipe_dispatcher_read(pzk_pipe_dispatcher_t*);
-static int pzk_pipe_dispatcher_write(pzk_pipe_dispatcher_t*);
+static int  pzk_pipe_dispatcher_read(pzk_pipe_dispatcher_t*);
+static int  pzk_pipe_dispatcher_write(pzk_pipe_dispatcher_t*);
+static void destroy_pzk_pipe_dispatcher(pzk_pipe_dispatcher_t*);
 
-pzk_pipe_dispatcher_t* new_pzk_pipe_dispatcher(pzk_dequeue_t* channel) {
+pzk_pipe_dispatcher_t* new_pzk_pipe_dispatcher(pzk_channel_t* channel) {
     pzk_pipe_dispatcher_t* dispatcher = (pzk_pipe_dispatcher_t*) calloc(1, sizeof(pzk_pipe_dispatcher_t));
     dispatcher->base.channel = channel;
     dispatcher->base.notify  = pzk_pipe_dispatcher_notify;
     dispatcher->read_pipe    = pzk_pipe_dispatcher_read;
     dispatcher->write_pipe   = pzk_pipe_dispatcher_write;
+    dispatcher->destroy      = destroy_pzk_pipe_dispatcher;
 
     if (pipe(dispatcher->fd) >= 0) {
         fcntl(dispatcher->fd[0], F_SETFL, O_NONBLOCK);

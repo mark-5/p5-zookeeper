@@ -10,20 +10,18 @@ struct pzk_dequeue_node {
 };
 typedef struct pzk_dequeue_node pzk_dequeue_node_t;
 
-typedef struct {
+typedef struct pzk_dequeue {
     pzk_dequeue_node_t* first;
     pzk_dequeue_node_t* last;
     size_t              size;
     pthread_mutex_t*    mutex;
+
+    int   (*push)    (struct pzk_dequeue*, void*);
+    void* (*pop)     (struct pzk_dequeue*);
+    int   (*unshift) (struct pzk_dequeue*, void*);
+    void* (*shift)   (struct pzk_dequeue*);
+    void  (*destroy) (struct pzk_dequeue*);
 } pzk_dequeue_t;
 
 pzk_dequeue_t* new_pzk_dequeue();
-void destroy_pzk_dequeue(pzk_dequeue_t*);
-
-int pzk_dequeue_push(pzk_dequeue_t*, void*);
-void* pzk_dequeue_pop(pzk_dequeue_t*);
-
-int pzk_dequeue_unshift(pzk_dequeue_t*, void*);
-void* pzk_dequeue_shift(pzk_dequeue_t*);
-
 #endif // ifndef PZK_DEQUEUE_H_
