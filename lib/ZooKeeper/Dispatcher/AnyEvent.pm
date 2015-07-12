@@ -2,6 +2,7 @@ package ZooKeeper::Dispatcher::AnyEvent;
 use AnyEvent;
 use Scalar::Util qw(weaken);
 use Moo;
+use namespace::autoclean;
 extends 'ZooKeeper::Dispatcher::Pipe';
 
 =head1 NAME

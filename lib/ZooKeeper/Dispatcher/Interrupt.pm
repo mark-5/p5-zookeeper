@@ -4,6 +4,7 @@ use AnyEvent;
 use Async::Interrupt;
 use Scalar::Util qw(weaken);
 use Moo;
+use namespace::autoclean;
 extends 'ZooKeeper::Dispatcher';
 
 =head1 NAME

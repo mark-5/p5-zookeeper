@@ -1,5 +1,6 @@
 configure_requires 'Devel::CheckLib';
 
+requires 'namespace::autoclean', '0.16';
 requires 'AnyEvent';
 requires 'Carp';
 requires 'Module::Runtime';

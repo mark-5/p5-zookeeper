@@ -1,6 +1,7 @@
 package ZooKeeper::Channel;
 use ZooKeeper::XS;
 use Moo;
+use namespace::autoclean;
 
 =head1 NAME
 

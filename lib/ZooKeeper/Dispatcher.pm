@@ -7,6 +7,7 @@ use AnyEvent;
 use Scalar::Util qw(blessed weaken);
 use Scope::Guard qw(guard);
 use Moo;
+use namespace::autoclean;
 
 =head1 NAME
 

@@ -1,6 +1,7 @@
 package ZooKeeper::Dispatcher::Pipe;
 use ZooKeeper::XS;
 use Moo;
+use namespace::autoclean;
 extends 'ZooKeeper::Dispatcher';
 
 =head1 NAME

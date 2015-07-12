@@ -4,6 +4,7 @@ use ZooKeeper::Constants;
 use Carp;
 use Module::Runtime qw(require_module);
 use Moo;
+use namespace::autoclean;
 use 5.10.1;
 
 our $VERSION = '0.0.20';
