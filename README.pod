@@ -229,7 +229,7 @@ Create a new node with the given path and data. Returns the path for the newly c
         OPTIONAL %extra
             acl
             buffer_length
-            persistent
+            ephemeral
             sequential
             value
 

@@ -42,20 +42,21 @@ sub test_acls {
             id     => join(":", $user, digest("$user:$pass")),
             perms  => ZOO_PERM_ALL,
         }],
+        ephemeral  => 1,
         sequential => 1,
         value      => $data,
     );
     is scalar($zk->get($node)), $data;
 
-    my $zk = $test->handle;
+    my $bad_zk = $test->handle;
     $authenticated = $test->new_future;
-    $zk->add_auth(
+    $bad_zk->add_auth(
         digest  => "different:credentials",
         watcher => $authenticated,
     );
     $authenticated->get;
 
-    cmp_ok(exception { $zk->get($node) }, "==", ZNOAUTH);
+    cmp_ok(exception { $bad_zk->get($node) }, "==", ZNOAUTH);
 }
 
 1;

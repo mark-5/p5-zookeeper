@@ -313,7 +313,7 @@ Create a new node with the given path and data. Returns the path for the newly c
         OPTIONAL %extra
             acl
             buffer_length
-            persistent
+            ephemeral
             sequential
             value
 
@@ -322,7 +322,7 @@ Create a new node with the given path and data. Returns the path for the newly c
 around create => sub {
     my ($orig, $self, $path, %extra) = @_;
     my $flags = 0;
-    $flags |= ZOO_EPHEMERAL if !$extra{persistent};
+    $flags |= ZOO_EPHEMERAL if $extra{ephemeral};
     $flags |= ZOO_SEQUENCE  if $extra{sequential};
     return $self->$orig($path, $extra{value}//'', $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
 };

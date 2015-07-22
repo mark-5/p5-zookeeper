@@ -8,7 +8,7 @@ my $name = $ARGV[0] || sprintf("member-%d", int(rand 1000));
 
 my $group = '/example-group';
 my $zk    = ZooKeeper->new(hosts => 'localhost:2181');
-$zk->create($group, persistent => 1) unless $zk->exists($group);
+$zk->create($group) unless $zk->exists($group);
 
 join_group($name);
 
@@ -20,7 +20,7 @@ AnyEvent->condvar->recv;
 
 sub join_group {
     my ($name) = @_;
-    $zk->create("$group/$name");
+    $zk->create("$group/$name", ephemeral => 1);
     $zk->get_children($group, watcher => \&group_watcher);
 }
 
