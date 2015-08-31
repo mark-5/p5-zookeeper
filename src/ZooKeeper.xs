@@ -454,16 +454,14 @@ commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
         int rc = zoo_multi(pzk->handle, count, ops, results);
 
         int i; for (i = 0; i < count; i++) {
-            zoo_op_t        op     = ops[i];
-            zoo_op_result_t result = results[i];
-            if (result.err == ZOK) {
+            if (rc == ZOK) {
                 ST(i) = sv_2mortal(op_to_sv(aTHX_ ops[i]));
             } else {
-                ST(i) = sv_2mortal(new_zerror(result.err));
+                ST(i) = sv_2mortal(op_error_to_sv(aTHX_ results[i]));
             }
         }
+        Safefree(results);
         // TODO fix memory management
-        //Safefree(results);
         //free_ops(ops, count);
         XSRETURN(count);
 

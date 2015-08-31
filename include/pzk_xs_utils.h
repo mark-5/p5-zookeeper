@@ -163,32 +163,14 @@ void throw_zerror(pTHX_ int rc, const char* fmt, ...) {
     LEAVE;
 }
 
-SV* new_zerror(pTHX_ int rc) {
-    dSP;
+SV* op_error_to_sv(pTHX_ zoo_op_result_t result) {
+    HV* result_hv = newHV();
 
-    ENTER;
-    SAVETMPS;
+    hv_store(result_hv, "type",    4, newSVpv("error", 0),            0);
+    hv_store(result_hv, "code",    4, newSViv(result.err),            0);
+    hv_store(result_hv, "message", 7, newSVpv(zerror(result.err), 0), 0);
 
-    HV* args_hv = newHV();
-    hv_store(args_hv, "code", 4, newSViv(rc), 0);
-    SV* args_sv = newRV_noinc((SV*) args_hv);
-
-    PUSHMARK(SP);
-    XPUSHs(sv_2mortal(newSVpv("ZooKeeper::Error", 0)));
-    XPUSHs(sv_2mortal(args_sv));
-    PUTBACK;
-
-    call_method("new", G_SCALAR);
-
-    SPAGAIN;
-
-    SV* zerror = POPs;
-
-    PUTBACK;
-    FREETMPS;
-    LEAVE;
-
-    return SvREFCNT_inc(zerror);
+    return newRV_noinc((SV*) result_hv);
 }
 
 SV* op_to_sv(pTHX_ const zoo_op_t op) {
