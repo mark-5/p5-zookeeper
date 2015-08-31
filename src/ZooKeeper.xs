@@ -440,13 +440,11 @@ BOOT:
     newCONSTSUB(stash, "ZOO_DELETE_OP",  newSViv(ZOO_DELETE_OP));
     newCONSTSUB(stash, "ZOO_SETDATA_OP", newSViv(ZOO_SETDATA_OP));
     newCONSTSUB(stash, "ZOO_CHECK_OP",   newSViv(ZOO_CHECK_OP));
-    newCONSTSUB(stash, "HAVE_ZOOKEEPER_3_4_0", newSViv(1));
 #else
     newCONSTSUB(stash, "ZOO_CREATE_OP",  &PL_sv_undef);
     newCONSTSUB(stash, "ZOO_DELETE_OP",  &PL_sv_undef);
     newCONSTSUB(stash, "ZOO_SETDATA_OP", &PL_sv_undef);
     newCONSTSUB(stash, "ZOO_CHECK_OP",   &PL_sv_undef);
-    newCONSTSUB(stash, "HAVE_ZOOKEEPER_3_4_0", newSViv(0));
 #endif
     SV* version_sv = newSVpvf("%d.%d.%d", ZOO_MAJOR_VERSION, ZOO_MINOR_VERSION, ZOO_PATCH_VERSION);
     newCONSTSUB(stash, "ZOOKEEPER_VERSION", version_sv);

@@ -58,4 +58,80 @@ sub test_bad_transaction {
     ok !$handle->exists("${node}-2/bad-parent"), 'node from bad op code not created';
 }
 
+sub test_check {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $node = "/_perl_zk_test_txn_check-$$";
+    $handle->create($node, ephemeral => 1);
+    my $stat = $handle->exists($node);
+
+    my ($happy_result) = $handle->transaction
+                                ->check($node, $stat->{version})
+                                ->commit;
+    is $happy_result->{type}, 'check', 'successful check returns result with type check';
+
+    my ($sad_result) = $handle->transaction
+                              ->check($node, $stat->{version} + 1)
+                              ->commit;
+    is $sad_result->{type}, 'error', 'bad check returns type error';
+    is $sad_result->{code}, ZBADVERSION, 'bad check returns bad version error code';
+}
+
+sub test_set {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $node = "/_perl_zk_test_txn_set-$$";
+    $handle->create($node, ephemeral => 1);
+    my $stat = $handle->exists($node);
+
+    my ($happy_result) = $handle->transaction
+                                ->set($node, 'happy', version => $stat->{version})
+                                ->commit;
+    my $happy_data = $handle->get($node);
+    is $happy_result->{type}, 'set', 'successful set op returns result with type set';
+    is $happy_data, 'happy', 'successful set op set new data';
+    is_deeply $happy_result->{stat}, $handle->exists($node), 'successful set op has stat set to current node stat';
+
+    my ($sad_result) = $handle->transaction
+                               ->set($node, 'sad', version => $stat->{version})
+                               ->commit;
+    my $sad_data = $handle->get($node);
+    is $sad_result->{type}, 'error', 'bad set op returned type error';
+    is $sad_result->{code}, ZBADVERSION, 'bad set op has bad version error code';
+    is $sad_data, 'happy', 'bad set op did not change data in node';
+}
+
+sub test_delete {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $node = "/_perl_zk_test_txn_check-$$";
+    $handle->create($node, ephemeral => 1);
+    my $stat = $handle->exists($node);
+
+    my ($sad_result) = $handle->transaction
+                              ->delete($node, version => $stat->{version} + 1)
+                              ->commit;
+    is $sad_result->{type}, 'error', 'bad delete op returned type error';
+    is $sad_result->{code}, ZBADVERSION, 'bad delete op has error code for bad version';
+    ok !!$handle->exists($node), 'bad delete op didnt delete node';
+
+    my ($happy_result) = $handle->transaction
+                                ->delete($node, version => $stat->{version})
+                                ->commit;
+    is $happy_result->{type}, 'delete', 'successful delete op returned type delete';
+    ok !$handle->exists($node), 'successful delete op deleted node';
+}
+
 1;
