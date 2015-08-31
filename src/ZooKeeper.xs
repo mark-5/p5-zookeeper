@@ -11,6 +11,7 @@
 #include <pzk_channel.h>
 #include <pzk_pipe_dispatcher.h>
 #include <pzk_interrupt_dispatcher.h>
+#include <pzk_transaction.h>
 #include <pzk_xs_utils.h>
 #include <zookeeper/zookeeper.h>
 
@@ -432,8 +433,37 @@ BOOT:
     newCONSTSUB(stash, "ZOO_CONNECTING_STATE",      newSViv(ZOO_CONNECTING_STATE));
     newCONSTSUB(stash, "ZOO_ASSOCIATING_STATE",     newSViv(ZOO_ASSOCIATING_STATE));
     newCONSTSUB(stash, "ZOO_CONNECTED_STATE",       newSViv(ZOO_CONNECTED_STATE));
+
+    newCONSTSUB(stash, "ZOO_CREATE_OP",  newSViv(ZOO_CREATE_OP));
+    newCONSTSUB(stash, "ZOO_DELETE_OP",  newSViv(ZOO_CREATE_OP));
+    newCONSTSUB(stash, "ZOO_SETDATA_OP", newSViv(ZOO_CREATE_OP));
+    newCONSTSUB(stash, "ZOO_CHECK_OP",   newSViv(ZOO_CREATE_OP));
 }
 
 const char*
 zerror(int c)
+
+MODULE = ZooKeeper PACKAGE = ZooKeeper::Transaction
+
+void
+commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
+    PPCODE:
+        zoo_op_result_t* results; Newxz(results, count, zoo_op_result_t);
+        zoo_op_t* ops = sv_to_ops(aTHX_ ops_sv);
+
+        int rc = zoo_multi(pzk->handle, count, ops, results);
+
+        int i; for (i = 0; i < count; i++) {
+            zoo_op_t        op     = ops[i];
+            zoo_op_result_t result = results[i];
+            if (result.err == ZOK) {
+                ST(i) = sv_2mortal(op_to_sv(aTHX_ ops[i]));
+            } else {
+                ST(i) = sv_2mortal(new_zerror(result.err));
+            }
+        }
+        // TODO fix memory management
+        //Safefree(results);
+        //free_ops(ops, count);
+        XSRETURN(count);
 

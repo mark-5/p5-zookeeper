@@ -5,6 +5,7 @@ use namespace::clean;
 with qw(
     ZooKeeper::XT::Role::CheckACLs
     ZooKeeper::XT::Role::CheckSessionEvents
+    ZooKeeper::XT::Role::CheckTransactions
 );
 
 1;

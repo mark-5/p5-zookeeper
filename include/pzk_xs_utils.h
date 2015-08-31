@@ -163,4 +163,122 @@ void throw_zerror(pTHX_ int rc, const char* fmt, ...) {
     LEAVE;
 }
 
+SV* new_zerror(pTHX_ int rc) {
+    dSP;
+
+    ENTER;
+    SAVETMPS;
+
+    HV* args_hv = newHV();
+    hv_store(args_hv, "code", 4, newSViv(rc), 0);
+    SV* args_sv = newRV_noinc((SV*) args_hv);
+
+    PUSHMARK(SP);
+    XPUSHs(sv_2mortal(newSVpv("ZooKeeper::Error", 0)));
+    XPUSHs(sv_2mortal(args_sv));
+    PUTBACK;
+
+    call_method("new", G_SCALAR);
+
+    SPAGAIN;
+
+    SV* zerror = POPs;
+
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+
+    return SvREFCNT_inc(zerror);
+}
+
+SV* op_to_sv(pTHX_ const zoo_op_t op) {
+    HV* op_hv = newHV();
+
+    if (op.type == ZOO_CREATE_OP) {
+        hv_store(op_hv, "type", 4, newSVpv("create", 0), 0);
+        hv_store(op_hv, "path", 4, newSVpv(op.create_op.buf, 0), 0);
+    } else if (op.type == ZOO_DELETE_OP) {
+        hv_store(op_hv, "type", 4, newSVpv("delete", 0), 0);
+    } else if (op.type == ZOO_SETDATA_OP) {
+        hv_store(op_hv, "type", 4, newSVpv("set", 0), 0);
+        SV* stat_sv = stat_to_sv(op.set_op.stat);
+        hv_store(op_hv, "stat", 4, stat_sv, 0);
+    } else if (op.type == ZOO_CHECK_OP) {
+        hv_store(op_hv, "type", 4, newSVpv("check", 0), 0);
+    }
+
+    return newRV_noinc((SV*) op_hv);
+}
+
+zoo_op_t sv_to_op(pTHX_ SV* const op_sv) {
+    if (!SvROK(op_sv) || (SvTYPE(SvRV(op_sv)) != SVt_PVAV))
+        Perl_croak(aTHX_ "op must be an array ref");
+    AV* op_av = (AV*) SvRV(op_sv);
+    SSize_t length = av_len(op_av) + 1;
+    int type       = SvIV(*(av_fetch(op_av, 0, 0)));
+
+    zoo_op_t op;
+    if (type == ZOO_CREATE_OP) {
+        const char* path  = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
+        const char* value = SvPV_nolen(*(av_fetch(op_av, 2, 0)));
+        int buffer_len    = SvIV(*(av_fetch(op_av, 3, 0)));
+        const struct ACL_vector* acl =
+            sv_to_acl_vector(aTHX_ *(av_fetch(op_av, 4, 0)));
+        int flags = SvIV(*(av_fetch(op_av, 5, 0)));
+
+        char* buffer; Newxz(buffer, buffer_len + 1, char);
+
+        zoo_create_op_init(&op, path, value, strlen(value), acl, flags, buffer, buffer_len);
+    } else if (type == ZOO_DELETE_OP) {
+        const char* path = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
+        int version      = SvIV(*(av_fetch(op_av, 2, 0)));
+        zoo_delete_op_init(&op, path, version);
+    } else if (type == ZOO_SETDATA_OP) {
+        const char* path  = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
+        const char* value = SvPV_nolen(*(av_fetch(op_av, 2, 0)));
+        int version       = SvIV(*(av_fetch(op_av, 3, 0)));
+
+        struct Stat* stat; Newxz(stat, 1, struct Stat);
+
+        zoo_set_op_init(&op, path, value, strlen(value), version, stat);
+    } else if (type == ZOO_CHECK_OP) {
+        const char* path = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
+        int version      = SvIV(*(av_fetch(op_av, 2, 0)));
+        zoo_check_op_init(&op, path, version);
+    }
+
+    return op;
+}
+
+zoo_op_t* sv_to_ops(pTHX_ const SV* ops_sv) {
+    if (!SvROK(ops_sv) || !(SvTYPE(SvRV(ops_sv)) == SVt_PVAV))
+        Perl_croak(aTHX_ "ops must be an array ref");
+    AV* ops_av     = (AV*) SvRV(ops_sv);
+    SSize_t length = av_len(ops_av) + 1;
+
+    zoo_op_t* ops; Newxz(ops, length, zoo_op_t);
+    int i; for (i = 0; i < length; i++) {
+        SV* op_sv = *(av_fetch(ops_av, i, 0));
+        ops[i]    = sv_to_op(aTHX_ op_sv);
+    }
+
+    return ops;
+}
+
+void free_op(pTHX_ zoo_op_t op) {
+    if (op.type == ZOO_CREATE_OP) {
+        Safefree(op.create_op.buf);
+        deallocate_ACL_vector((struct ACL_vector*) op.create_op.acl);
+    } else if (op.type == ZOO_SETDATA_OP) {
+        Safefree(op.set_op.stat);
+    }
+}
+
+void free_ops(pTHX_ zoo_op_t* ops, int length) {
+    int i; for (i = 0; i < length; i++) {
+        free_op(ops[i]);
+    }
+    Safefree(ops);
+}
+
 #endif // ifndef PZK_XS_UTILS_H_

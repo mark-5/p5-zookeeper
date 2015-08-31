@@ -1,6 +1,7 @@
 package ZooKeeper;
 use ZooKeeper::XS;
 use ZooKeeper::Constants;
+use ZooKeeper::Transaction;
 use Carp;
 use Module::Runtime qw(require_module);
 use Moo;
@@ -476,6 +477,11 @@ around set_acl => sub {
     my ($orig, $self, $path, $acl, %extra) = @_;
     return $self->$orig($path, $acl, $extra{version}//-1);
 };
+
+sub transaction {
+    my ($self) = @_;
+    return ZooKeeper::Transaction->new(handle => $self);
+}
 
 =head2 trace
 

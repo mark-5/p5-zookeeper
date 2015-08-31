@@ -173,6 +173,12 @@ our %EXPORT_TAGS = (
         ZOO_CONNECTED_STATE
         zstate
     )],
+    'ops' => [qw(
+        ZOO_CREATE_OP
+        ZOO_DELETE_OP
+        ZOO_SETDATA_OP
+        ZOO_CHECK_OP
+    )],
 );
 
 our @EXPORT       = map {@{$EXPORT_TAGS{$_}}} keys %EXPORT_TAGS;
