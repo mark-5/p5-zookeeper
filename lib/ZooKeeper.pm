@@ -478,6 +478,22 @@ around set_acl => sub {
     return $self->$orig($path, $acl, $extra{version}//-1);
 };
 
+=head2 transaction
+
+Return a ZooKeeper::Transaction for atomically updating multiple nodes.
+See L<ZooKeeper::Transaction> for more details on using transactions.
+
+Support for transactinos requires at least version 3.4.0 of the
+ZooKeeper C library. An exception will be thrown if attempting to
+use transactions with an earlier version.
+
+    my $txn = $zk->transaction
+                 ->delete( '/some-node'    )
+                 ->create( '/another-node' )
+    my ($delete_result, $create_result) = $txn->commit;
+
+=cut
+
 sub transaction {
     my ($self) = @_;
     return ZooKeeper::Transaction->new(handle => $self);

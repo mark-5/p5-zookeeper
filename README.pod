@@ -354,6 +354,23 @@ Set ACls for a node at the given path. Throws a ZooKeeper::Error on failure.
 
 =cut
 
+=head2 transaction
+
+Return a ZooKeeper::Transaction for atomically updating multiple nodes.
+See L<ZooKeeper::Transaction> for more details on using transactions.
+
+Support for transactinos requires at least version 3.4.0 of the
+ZooKeeper C library. An exception will be thrown if attempting to
+use transactions with an earlier version.
+
+    my $txn = $zk->transaction
+                 ->delete( '/some-node'    )
+                 ->create( '/another-node' )
+    my ($delete_result, $create_result) = $txn->commit;
+
+
+=cut
+
 =head2 trace
 
 Set the tracing level for the ZooKeeper client. Can also be set using the PERL_ZOOKEEPER_TRACE environmental variable, where PERL_ZOOKEEPER_TRACE=$level=$file traces to $file with debug level $level.
