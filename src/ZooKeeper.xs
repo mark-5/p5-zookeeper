@@ -461,7 +461,6 @@ commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
             }
         }
         Safefree(results);
-        // TODO fix memory management
-        //free_ops(ops, count);
+        free_ops(ops, count);
         XSRETURN(count);
 

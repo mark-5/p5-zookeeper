@@ -250,7 +250,8 @@ zoo_op_t* sv_to_ops(pTHX_ const SV* ops_sv) {
 void free_op(pTHX_ zoo_op_t op) {
     if (op.type == ZOO_CREATE_OP) {
         Safefree(op.create_op.buf);
-        deallocate_ACL_vector((struct ACL_vector*) op.create_op.acl);
+        Safefree(op.create_op.acl->data);
+        Safefree(op.create_op.acl);
     } else if (op.type == ZOO_SETDATA_OP) {
         Safefree(op.set_op.stat);
     }
