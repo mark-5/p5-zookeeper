@@ -94,17 +94,17 @@ SV* acl_vector_to_sv(pTHX_ struct ACL_vector* acl_v) {
 SV* stat_to_sv(pTHX_ struct Stat* stat) {
     HV* stat_hv = newHV();
 
-    hv_store(stat_hv, "czxid", 5 , newSViv(stat->czxid), 0);
-    hv_store(stat_hv, "mzxid", 5 , newSViv(stat->mzxid), 0);
-    hv_store(stat_hv, "ctime", 5 , newSViv(stat->ctime), 0);
-    hv_store(stat_hv, "mtime", 5 , newSViv(stat->mtime), 0);
-    hv_store(stat_hv, "version", 7, newSViv(stat->mtime), 0);
-    hv_store(stat_hv, "cversion", 8, newSViv(stat->mtime), 0);
-    hv_store(stat_hv, "aversion", 8, newSViv(stat->mtime), 0);
+    hv_store(stat_hv, "czxid",          5,  newSViv(stat->czxid),          0);
+    hv_store(stat_hv, "mzxid",          5,  newSViv(stat->mzxid),          0);
+    hv_store(stat_hv, "ctime",          5,  newSViv(stat->ctime),          0);
+    hv_store(stat_hv, "mtime",          5,  newSViv(stat->mtime),          0);
+    hv_store(stat_hv, "version",        7,  newSViv(stat->version),        0);
+    hv_store(stat_hv, "cversion",       8,  newSViv(stat->cversion),       0);
+    hv_store(stat_hv, "aversion",       8,  newSViv(stat->aversion),       0);
     hv_store(stat_hv, "ephemeralOwner", 14, newSViv(stat->ephemeralOwner), 0);
-    hv_store(stat_hv, "dataLength", 10, newSViv(stat->dataLength), 0);
-    hv_store(stat_hv, "numChildren", 11, newSViv(stat->numChildren), 0);
-    hv_store(stat_hv, "pzxid", 5, newSViv(stat->pzxid), 0);
+    hv_store(stat_hv, "dataLength",     10, newSViv(stat->dataLength),     0);
+    hv_store(stat_hv, "numChildren",    11, newSViv(stat->numChildren),    0);
+    hv_store(stat_hv, "pzxid",          5,  newSViv(stat->pzxid),          0);
 
     return newRV_noinc((SV*) stat_hv);
 }
