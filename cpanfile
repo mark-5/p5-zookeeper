@@ -1,4 +1,8 @@
+configure_requires 'version', '0.77';
+configure_requires 'Config';
 configure_requires 'Devel::CheckLib';
+configure_requires 'File::Temp';
+configure_requires 'IO::File';
 
 requires 'namespace::autoclean', '0.16';
 requires 'AnyEvent';

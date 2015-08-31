@@ -2,7 +2,7 @@ package ZooKeeper;
 use ZooKeeper::XS;
 use ZooKeeper::Constants;
 use ZooKeeper::Transaction;
-use Carp;
+use Carp qw(croak);
 use Module::Runtime qw(require_module);
 use Moo;
 use namespace::autoclean;
@@ -496,6 +496,10 @@ use transactions with an earlier version.
 
 sub transaction {
     my ($self) = @_;
+    unless (HAVE_ZOOKEEPER_3_4_0) {
+        my $zversion = ZOOKEEPER_VERSION;
+        croak "Transactions require version 3.4.0 of the ZooKeeper C library. Only version $zversion was detected";
+    }
     return ZooKeeper::Transaction->new(handle => $self);
 }
 

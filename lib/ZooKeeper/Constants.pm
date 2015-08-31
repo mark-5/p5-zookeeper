@@ -179,6 +179,10 @@ our %EXPORT_TAGS = (
         ZOO_SETDATA_OP
         ZOO_CHECK_OP
     )],
+    'version' => [qw(
+        HAVE_ZOOKEEPER_3_4_0
+        ZOOKEEPER_VERSION
+    )],
 );
 
 our @EXPORT       = map {@{$EXPORT_TAGS{$_}}} keys %EXPORT_TAGS;
