@@ -359,10 +359,6 @@ Set ACls for a node at the given path. Throws a ZooKeeper::Error on failure.
 Return a ZooKeeper::Transaction for atomically updating multiple nodes.
 See L<ZooKeeper::Transaction> for more details on using transactions.
 
-Support for transactinos requires at least version 3.4.0 of the
-ZooKeeper C library. An exception will be thrown if attempting to
-use transactions with an earlier version.
-
     my $txn = $zk->transaction
                  ->delete( '/some-node'    )
                  ->create( '/another-node' )

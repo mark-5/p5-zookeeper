@@ -163,8 +163,6 @@ void throw_zerror(pTHX_ int rc, const char* fmt, ...) {
     LEAVE;
 }
 
-#ifdef HAVE_ZOOKEEPER_3_4_0
-
 SV* op_error_to_sv(pTHX_ zoo_op_result_t result) {
     HV* result_hv = newHV();
 
@@ -265,7 +263,5 @@ void free_ops(pTHX_ zoo_op_t* ops, int length) {
     }
     Safefree(ops);
 }
-
-#endif // ifdef HAVE_ZOOKEEPER_3_4_0
 
 #endif // ifndef PZK_XS_UTILS_H_

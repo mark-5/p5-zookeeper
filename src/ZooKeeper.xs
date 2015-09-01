@@ -434,27 +434,17 @@ BOOT:
     newCONSTSUB(stash, "ZOO_CONNECTING_STATE",      newSViv(ZOO_CONNECTING_STATE));
     newCONSTSUB(stash, "ZOO_ASSOCIATING_STATE",     newSViv(ZOO_ASSOCIATING_STATE));
     newCONSTSUB(stash, "ZOO_CONNECTED_STATE",       newSViv(ZOO_CONNECTED_STATE));
-#ifdef HAVE_ZOOKEEPER_3_4_0
 
     newCONSTSUB(stash, "ZOO_CREATE_OP",  newSViv(ZOO_CREATE_OP));
     newCONSTSUB(stash, "ZOO_DELETE_OP",  newSViv(ZOO_DELETE_OP));
     newCONSTSUB(stash, "ZOO_SETDATA_OP", newSViv(ZOO_SETDATA_OP));
     newCONSTSUB(stash, "ZOO_CHECK_OP",   newSViv(ZOO_CHECK_OP));
-#else
-    newCONSTSUB(stash, "ZOO_CREATE_OP",  &PL_sv_undef);
-    newCONSTSUB(stash, "ZOO_DELETE_OP",  &PL_sv_undef);
-    newCONSTSUB(stash, "ZOO_SETDATA_OP", &PL_sv_undef);
-    newCONSTSUB(stash, "ZOO_CHECK_OP",   &PL_sv_undef);
-#endif
-    SV* version_sv = newSVpvf("%d.%d.%d", ZOO_MAJOR_VERSION, ZOO_MINOR_VERSION, ZOO_PATCH_VERSION);
-    newCONSTSUB(stash, "ZOOKEEPER_VERSION", version_sv);
 }
 
 const char*
 zerror(int c)
 
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Transaction
-#ifdef HAVE_ZOOKEEPER_3_4_0
 
 void
 commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
@@ -475,5 +465,4 @@ commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
         free_ops(ops, count);
         XSRETURN(count);
 
-#endif
 

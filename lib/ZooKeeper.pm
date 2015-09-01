@@ -2,7 +2,6 @@ package ZooKeeper;
 use ZooKeeper::XS;
 use ZooKeeper::Constants;
 use ZooKeeper::Transaction;
-use ZooKeeper::Utils qw(assert_zookeeper_version);
 use Carp qw(croak);
 use Module::Runtime qw(require_module);
 use Moo;
@@ -484,10 +483,6 @@ around set_acl => sub {
 Return a ZooKeeper::Transaction for atomically updating multiple nodes.
 See L<ZooKeeper::Transaction> for more details on using transactions.
 
-Support for transactinos requires at least version 3.4.0 of the
-ZooKeeper C library. An exception will be thrown if attempting to
-use transactions with an earlier version.
-
     my $txn = $zk->transaction
                  ->delete( '/some-node'    )
                  ->create( '/another-node' )
@@ -497,7 +492,6 @@ use transactions with an earlier version.
 
 sub transaction {
     my ($self) = @_;
-    assert_zookeeper_version('3.4.0', 'Transactions require version 3.4.0 of the ZooKeeper C library. Only version %v was detected.');
     return ZooKeeper::Transaction->new(handle => $self);
 }
 
