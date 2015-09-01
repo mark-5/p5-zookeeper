@@ -79,7 +79,7 @@ and with 'stat' set a stat hash ref of the updated node.
 
 =head2 check
 
-    $txn->set($path, $version)
+    $txn->check($path, $version)
 
         REQUIRED $path
         REQUIRED $version
