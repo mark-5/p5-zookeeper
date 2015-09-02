@@ -140,7 +140,7 @@ sub set {
 
 sub check {
     my ($self, $path, $version) = @_;
-    return $self->_add_op(ZOO_CHECK_OP, $path, $version);
+    return $self->_add_op(ZOO_CHECK_OP, $path, $version // -1);
 }
 
 around commit => sub {
