@@ -462,7 +462,7 @@ commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
             }
         }
         Safefree(results);
-        free_ops(ops, count);
+        free_ops(aTHX_ ops, count);
         XSRETURN(count);
 
 

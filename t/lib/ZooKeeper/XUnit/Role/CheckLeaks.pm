@@ -25,6 +25,7 @@ sub test_dispatcher_leaks {
 
 sub test_watcher_constructor_leaks {
     my ($self) = @_;
+    my $class  = ref($self->new_dispatcher);
     no_leaks_ok {
         my @watchers;
         my $dispatcher = $self->new_dispatcher;

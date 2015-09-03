@@ -183,7 +183,7 @@ SV* op_to_sv(pTHX_ const zoo_op_t op) {
         hv_store(op_hv, "type", 4, newSVpv("delete", 0), 0);
     } else if (op.type == ZOO_SETDATA_OP) {
         hv_store(op_hv, "type", 4, newSVpv("set", 0), 0);
-        SV* stat_sv = stat_to_sv(op.set_op.stat);
+        SV* stat_sv = stat_to_sv(aTHX_ op.set_op.stat);
         hv_store(op_hv, "stat", 4, stat_sv, 0);
     } else if (op.type == ZOO_CHECK_OP) {
         hv_store(op_hv, "type", 4, newSVpv("check", 0), 0);
@@ -259,7 +259,7 @@ void free_op(pTHX_ zoo_op_t op) {
 
 void free_ops(pTHX_ zoo_op_t* ops, int length) {
     int i; for (i = 0; i < length; i++) {
-        free_op(ops[i]);
+        free_op(aTHX_ ops[i]);
     }
     Safefree(ops);
 }
