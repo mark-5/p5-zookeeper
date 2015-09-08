@@ -454,12 +454,36 @@ MODULE = ZooKeeper PACKAGE = ZooKeeper::Transaction
 void
 commit(SV* self, pzk_t* pzk, int count, SV* ops_sv)
     PPCODE:
+        int i;
         zoo_op_result_t* results; Newxz(results, count, zoo_op_result_t);
         zoo_op_t* ops = sv_to_ops(aTHX_ ops_sv);
 
         int rc = zoo_multi(pzk->handle, count, ops, results);
+        if (rc == ZMARSHALLINGERROR && is_unrecoverable(pzk->handle)) {
+            // assume the error is ZINVALIDSTATE if handle is unrecoverable
+            // internally Request_path_init checks the zhandle status
+            //  and returns an error if it is unrecoverable
+            // zoo_multi considers this a marshalling error, because it's generated
+            //  while forming the request, which is misleading to the user
+            rc = ZINVALIDSTATE;
+        }
 
-        int i; for (i = 0; i < count; i++) {
+        // handle any system errors
+        if (rc != ZOK) {
+            int op_errors = 0;
+            for (i = 0; i < count; i++) {
+                if (results[i].err != ZOK) op_errors++;
+            }
+            if (!op_errors) {
+                // if the multi call failed, but no ops had errors
+                // assume this is a system error and throw an exception
+                Safefree(results);
+                free_ops(aTHX_ ops, count);
+                throw_zerror(aTHX_ rc, "Error committing transaction: %s", zerror(rc));
+            }
+        }
+
+        for (i = 0; i < count; i++) {
             if (rc == ZOK) {
                 ST(i) = sv_2mortal(op_to_sv(aTHX_ ops[i]));
             } else {
