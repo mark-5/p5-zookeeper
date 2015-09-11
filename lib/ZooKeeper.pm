@@ -208,6 +208,15 @@ The client_id for a ZooKeeper session. Can be set during construction to resume 
 
 =cut
 
+=head2 default_acl
+
+=cut
+
+has default_acl => (
+    is      => 'ro',
+    default => sub { ZOO_OPEN_ACL_UNSAFE },
+);
+
 =head2 dispatcher
 
 The implementation of ZooKeeper::Dispatcher to be used. Defaults to AnyEvent.
@@ -322,6 +331,7 @@ Create a new node with the given path and data. Returns the path for the newly c
 
 around create => sub {
     my ($orig, $self, $path, %extra) = @_;
+    my $acl   = $extra{acl} // $self->default_acl;
     my $flags = 0;
     $flags |= ZOO_EPHEMERAL if $extra{ephemeral};
     $flags |= ZOO_SEQUENCE  if $extra{sequential};
@@ -331,7 +341,7 @@ around create => sub {
         $path,
         $extra{value},
         $extra{buffer_length} // $self->buffer_length,
-        $extra{acl}           // ZOO_OPEN_ACL_UNSAFE,
+        $acl,
         $flags,
     );
 };

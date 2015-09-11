@@ -156,6 +156,11 @@ The client_id for a ZooKeeper session. Can be set during construction to resume 
 
 =cut
 
+=head2 default_acl
+
+
+=cut
+
 =head2 dispatcher
 
 The implementation of ZooKeeper::Dispatcher to be used. Defaults to AnyEvent.
@@ -179,7 +184,7 @@ Instead of a string, a dispatcher object can be passed directly. This is necessa
 
 =head2 ignore_session_events
 
-If set to false, all watchers will be triggered for session events, such as disconnecting and reconnecting to the ZooKeeper server. This means that watchers can be triggered multiple times, until the watcher event is triggered.
+If set to false, all watchers will be triggered for session events, such as disconnecting to the ZooKeeper server. This means that watchers can be triggered multiple times, until the watcher event is triggered.
 
 The default value is true, which will only trigger watchers once, for the watcher event.
 
