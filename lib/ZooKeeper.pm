@@ -282,8 +282,19 @@ sub BUILD {
         $self->create_watcher('' => $self->watcher, type => 'default');
     };
 
-    $self->_xs_init($self->hosts, $self->timeout, $watcher, $args->{client_id});
-    $self->add_auth(@{$self->authentication||[]}) if $self->authentication;
+    $self->_xs_init;
+    $self->connect(
+        authentication => $self->authentication,
+        client_id      => $args->{client_id},
+        hosts          => $self->hosts,
+        timeout        => $self->timeout,
+        watcher        => $watcher,
+    );
+}
+
+sub DEMOLISH {
+    my ($self) = @_;
+    $self->_xs_destroy;
 }
 
 =head1 METHODS
@@ -317,6 +328,42 @@ Can optionally be passed a timeout(specified in seconds), which will cause wait 
 
     OPTIONAL $seconds
 
+=cut
+
+around connect => sub {
+    my ($orig, $self, %args) = @_;
+    my ($hosts, $timeout, $watcher, $client_id, $authentication) =
+        @args{qw(hosts timeout watcher client_id authentication)};
+    $self->$orig($hosts, $timeout, $watcher, $client_id);
+    $self->add_auth(@$authentication) if $authentication;
+};
+
+=head2 close
+
+Close a ZooKeeper session.
+
+If the handle was not created by the current process, a ZOO_CLOSE_OP will NOT be sent to the server. Instead, only the underlying socket will be closed.
+
+=head2 reopen
+
+Reopen a ZooKeeper session after forking.
+
+This creates a new ZooKeeper session, without closing the parent session.
+
+=cut
+
+sub reopen {
+    my ($self, %args) = @_;
+    $self->close;
+    # since this creates a new session, don't pass a client_id
+    $self->connect(
+        authentication => $self->authentication,
+        hosts          => $self->hosts,
+        timeout        => $self->timeout,
+        watcher        => $self->watcher,
+        %args,
+    );
+}
 
 =head2 create
 
@@ -552,7 +599,7 @@ Set the tracing level for the ZooKeeper client. Can also be set using the PERL_Z
 
 =head2 Forking
 
-The underlying C library uses POSIX threads. This means that ZooKeeper is not fork safe. Only exec and POSIX::_exit can be guaranteed to work safely in the child process.
+ZooKeeper now offers experimental support for forking safely. A child process may use either the close or reopen methods on a handle, after forking, to destroy the previous connection. Since forking in a multithreaded process is usually very dangerous, this library only closes the underlying socket, and removes references to the previous zhandle.
 
 =head2 Signals
 

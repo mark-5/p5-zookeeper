@@ -36,6 +36,7 @@ author_requires 'Test::Fatal';
 
 test_requires 'AnyEvent::Future';
 test_requires 'namespace::clean';
+test_requires 'Storable';
 test_requires 'Test::Class::Moose', '0.55';
 test_requires 'Test::LeakTrace';
 test_requires 'Test::More';

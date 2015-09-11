@@ -190,7 +190,7 @@ Instead of a string, a dispatcher object can be passed directly. This is necessa
 
 =head2 ignore_session_events
 
-If set to false, all watchers will be triggered for session events, such as disconnecting to the ZooKeeper server. This means that watchers can be triggered multiple times, until the watcher event is triggered.
+If set to false, all watchers will be triggered for session events, such as disconnecting and reconnecting to the ZooKeeper server. This means that watchers can be triggered multiple times, until the watcher event is triggered.
 
 The default value is true, which will only trigger watchers once, for the watcher event.
 
@@ -228,6 +228,23 @@ Can optionally be passed a timeout(specified in seconds), which will cause wait 
 
     OPTIONAL $seconds
 
+
+=cut
+
+=head2 close
+
+Close a ZooKeeper session.
+
+If the handle was not created by the current process, a ZOO_CLOSE_OP will NOT be sent to the server. Instead, only the underlying socket will be closed.
+
+=head2 reopen
+
+Reopen a ZooKeeper session after forking.
+
+This creates a new ZooKeeper session, without closing the parent session.
+
+
+=cut
 
 =head2 create
 
@@ -399,7 +416,7 @@ Set the tracing level for the ZooKeeper client. Can also be set using the PERL_Z
 
 =head2 Forking
 
-The underlying C library uses POSIX threads. This means that ZooKeeper is not fork safe. Only exec and POSIX::_exit can be guaranteed to work safely in the child process.
+ZooKeeper now offers experimental support for forking safely. A child process may use either the close or reopen methods on a handle, after forking, to destroy the previous connection. Since forking in a multithreaded process is usually very dangerous, this library only closes the underlying socket, and removes references to the previous zhandle.
 
 =head2 Signals
 

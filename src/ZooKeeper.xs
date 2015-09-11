@@ -37,32 +37,46 @@ trace(SV* self, int level, const char* path=NULL)
         zoo_set_log_stream(stream);
 
 void
-_xs_init(self, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
-        SV*               self
+_xs_init(SV* self)
+    PPCODE:
+        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
+        pzk_t* pzk = new_pzk(NULL);
+        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
+
+void
+connect(pzk, hosts, recv_timeout, _watcher=NULL, clientid=NULL, flags=0)
+        pzk_t*            pzk
         const char*       hosts
         SV*               _watcher
         int               recv_timeout
         const clientid_t* clientid
         int               flags
     PPCODE:
-        if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
-
         pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
         watcher_fn cb = watcher ? pzk_watcher_cb : NULL;
         zhandle_t* handle = zookeeper_init(hosts, cb, recv_timeout, clientid, (void*) watcher, flags);
         if (!handle) throw_zerror(aTHX_ errno, "Error initializing ZooKeeper handle for '%s': %s", hosts, strerror(errno));
 
-        pzk_t* pzk = new_pzk(handle);
-        sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) pzk, 0);
+        pzk->handle = handle;
+
+int
+is_unrecoverable(pzk_t* pzk)
+    CODE:
+        RETVAL = is_unrecoverable(pzk->handle);
+    OUTPUT:
+        RETVAL
 
 void
-DESTROY(SV* self)
+close(SV* self)
     PPCODE:
         pzk_t* pzk = (pzk_t*) unsafe_tied_object_to_ptr(aTHX_ self);
-        if (pzk) {
-            if (pzk->handle) zookeeper_close(pzk->handle);
-            pzk->destroy(pzk);
-        }
+        if (pzk) pzk->close(pzk);
+
+void
+_xs_destroy(SV* self)
+    PPCODE:
+        pzk_t* pzk = (pzk_t*) unsafe_tied_object_to_ptr(aTHX_ self);
+        if (pzk) pzk->destroy(pzk);
 
 void
 _set_watcher(pzk_t* pzk, SV* _watcher=NULL)
