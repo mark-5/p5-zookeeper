@@ -272,6 +272,11 @@ Delete a node at the given path. Throws a ZooKeeper::Error if the delete was uns
 
 =cut
 
+=head2 ensure_path
+
+
+=cut
+
 =head2 exists
 
 Check whether a node exists at the given path, and optionally set a watcher for when the node is created or deleted.

@@ -386,6 +386,19 @@ around delete => sub {
     return $self->$orig($path, $extra{version}//-1);
 };
 
+=head2 ensure_path
+
+=cut
+
+sub ensure_path {
+    my ($self, $path, %extra) = @_;
+    return if $self->exists($path);
+
+    my ($parent) = $path =~ m#^(.*)/[^/]+$#;
+    $self->ensure_path($parent, %extra) if $parent;
+    $self->create($path, %extra);
+}
+
 =head2 exists
 
 Check whether a node exists at the given path, and optionally set a watcher for when the node is created or deleted.
@@ -445,7 +458,11 @@ In list context, the data and stat hashref of the node is returned. Otherwise ju
 around get => sub {
     my ($orig, $self, $path, %extra) = @_;
     my $watcher = $extra{watcher} ? $self->create_watcher($path, $extra{watcher}, type => 'get') : undef;
-    return $self->$orig($path, $extra{buffer_length}//$self->buffer_length, $watcher);
+    return $self->$orig(
+        $path,
+        $extra{buffer_length} // $self->buffer_length,
+        $watcher,
+    );
 };
 
 =head2 set
