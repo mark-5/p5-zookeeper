@@ -10,6 +10,12 @@ ZooKeeper - Perl bindings for Apache ZooKeeper
     my @children = $zk->get_children('/', watcher => sub { my $event = shift; $cv->send($event) });
     my $child_event = $cv->recv;
 
+=head1 STATUS
+
+Unstable.
+
+Until version 1.0.0, some aspects of the API may change, most likely related to exception handling for commands and watchers.
+
 =head1 DESCRIPTION
 
 ZooKeeper is a perl interface to the Apache ZooKeeper C client library.
