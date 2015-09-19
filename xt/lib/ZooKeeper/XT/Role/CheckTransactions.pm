@@ -28,7 +28,7 @@ sub test_create {
             path => "${node}-2",
             type => 'create',
         },
-    ], 'returned path and types for nods created in transaction';
+    ], 'returned path and types for nodes created in transaction';
 
     ok $handle->exists("${node}-1");
     ok $handle->exists("${node}-2");

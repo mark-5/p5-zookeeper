@@ -87,10 +87,12 @@ add_auth(pzk_t* pzk, char* scheme, char* credential=NULL, SV* _watcher=NULL)
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error trying to authenticate: %s", zerror(rc));
 
 SV*
-create(pzk_t* pzk, char* path, char* value, int buffer_len, struct ACL_vector* acl=NULL, int flags=0)
+create(pzk_t* pzk, char* path, SV* value_sv, int buffer_len, struct ACL_vector* acl=NULL, int flags=0)
     CODE:
         char* buffer; Newxz(buffer, buffer_len + 1, char);
-        size_t value_len = strlen(value);
+        size_t value_len = -1;
+        char* value      = SvOK(value_sv) ? SvPV(value_sv, value_len) : NULL;
+
         int rc = zoo_create(pzk->handle, path, value, value_len, acl, flags, buffer, buffer_len);
         RETVAL = newSVpv(buffer, 0);
         Safefree(buffer);
@@ -165,7 +167,11 @@ get(pzk_t* pzk, char* path, int buffer_len, SV* _watcher=NULL)
 
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error getting data for node '%s': %s", path, zerror(rc));
 
-        ST(0) = newSVpv(buffer, 0);
+        if (buffer_len == -1) {
+            ST(0) = &PL_sv_undef;
+        } else {
+            ST(0) = newSVpv(buffer, buffer_len);
+        }
         Safefree(buffer);
         if (GIMME_V == G_ARRAY) {
             ST(1) = sv_2mortal(stat_to_sv(aTHX_ &stat));
@@ -175,10 +181,13 @@ get(pzk_t* pzk, char* path, int buffer_len, SV* _watcher=NULL)
         }
 
 SV*
-set(pzk_t* pzk, char* path, char* data, int version=-1)
+set(pzk_t* pzk, char* path, SV* value_sv, int version=-1)
     CODE:
         struct Stat stat; Zero(&stat, 1, struct Stat);
-        int rc = zoo_set2(pzk->handle, path, data, strlen(data), version, &stat);
+        size_t value_len = -1;
+        char* value      = SvOK(value_sv) ? SvPV(value_sv, value_len) : NULL;
+
+        int rc = zoo_set2(pzk->handle, path, value, value_len, version, &stat);
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error setting data for node '%s': %s", path, zerror(rc));
         RETVAL = stat_to_sv(aTHX_ &stat);
 

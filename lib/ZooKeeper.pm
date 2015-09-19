@@ -325,7 +325,15 @@ around create => sub {
     my $flags = 0;
     $flags |= ZOO_EPHEMERAL if $extra{ephemeral};
     $flags |= ZOO_SEQUENCE  if $extra{sequential};
-    return $self->$orig($path, $extra{value}//'', $extra{buffer_length}//$self->buffer_length, $extra{acl}//ZOO_OPEN_ACL_UNSAFE, $flags);
+
+    no warnings 'uninitialized';
+    return $self->$orig(
+        $path,
+        $extra{value},
+        $extra{buffer_length} // $self->buffer_length,
+        $extra{acl}           // ZOO_OPEN_ACL_UNSAFE,
+        $flags,
+    );
 };
 
 =head2 add_auth
@@ -447,6 +455,7 @@ On succes, returns a stat hashref of the node. Otherwise a ZooKeeper::Error is t
 
 around set => sub {
     my ($orig, $self, $path, $value, %extra) = @_;
+    no warnings 'uninitialized';
     return $self->$orig($path, $value, $extra{version}//-1);
 };
 
