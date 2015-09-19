@@ -1,4 +1,4 @@
-0.1.5 - 2015-9-18
+0.1.6 - 2015-9-18
   - fix handling of node data with null bytes (#2)
 
 0.1.4 - 2015-8-31
