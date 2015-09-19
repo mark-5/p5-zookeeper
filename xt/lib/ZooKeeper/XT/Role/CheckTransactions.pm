@@ -134,4 +134,72 @@ sub test_delete {
     ok !$handle->exists($node), 'successful delete op deleted node';
 }
 
+sub test_txn_creates_data_with_null_bytes {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $path   = "/_perl_zk_test_txn_creates_data_with_null_bytes-$$";
+    my $value  = "$$-\0-$$";
+    my $length = length($value);
+
+    $handle->transaction->create($path, value => $value, ephemeral => 1)->commit;
+
+    my ($got, $stat) = $handle->get($path);
+    is $stat->{dataLength}, $length, 'data with null byte has same expected length';
+    cmp_ok $got, 'eq', $value, 'data with null bytes has is unchanged after set';
+}
+
+sub test_txn_sets_data_with_null_bytes {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $path = "/_perl_zk_test_txn_sets_data_with_null_bytes-$$";
+    $handle->create($path, ephemeral => 1);
+
+    my $value  = "$$-\0-$$";
+    my $length = length($value);
+    $handle->transaction->set($path, $value)->commit;
+
+    my ($got, $stat) = $handle->get($path);
+    is $stat->{dataLength}, $length, 'data with null bytes has expected length';
+    cmp_ok $got, 'eq', $value, 'data with null bytes has is unchanged after set';
+}
+
+sub test_txn_creates_null_data {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $path = "/_perl_zk_test_txn_creates_null_data-$$";
+    $handle->transaction->create($path, ephemeral => 1)->commit;
+
+    my ($got, $stat) = $handle->get($path);
+    is $stat->{dataLength}, 0, 'null data has no length';
+    ok !defined($got), 'returned undef for null data';
+}
+
+sub test_txn_sets_null_data {
+    my ($test) = @_;
+    my $handle = ZooKeeper->new(
+        hosts      => test_hosts,
+        dispatcher => $test->new_dispatcher,
+    );
+
+    my $path = "/_perl_zk_test_txn_sets_null_data-$$";
+    $handle->create($path, value => "defined", ephemeral => 1);
+    $handle->transaction->set($path, undef)->commit;
+
+    my ($got, $stat) = $handle->get($path);
+    is $stat->{dataLength}, 0, 'null data has no length';
+    ok !defined($got), 'null data returns undef';
+}
+
 1;

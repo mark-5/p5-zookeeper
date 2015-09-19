@@ -167,11 +167,7 @@ get(pzk_t* pzk, char* path, int buffer_len, SV* _watcher=NULL)
 
         if (rc != ZOK) throw_zerror(aTHX_ rc, "Error getting data for node '%s': %s", path, zerror(rc));
 
-        if (buffer_len == -1) {
-            ST(0) = &PL_sv_undef;
-        } else {
-            ST(0) = newSVpv(buffer, buffer_len);
-        }
+        ST(0) = buffer_len == -1 ? &PL_sv_undef : newSVpv(buffer, buffer_len);
         Safefree(buffer);
         if (GIMME_V == G_ARRAY) {
             ST(1) = sv_2mortal(stat_to_sv(aTHX_ &stat));

@@ -201,8 +201,11 @@ zoo_op_t sv_to_op(pTHX_ SV* const op_sv) {
 
     zoo_op_t op;
     if (type == ZOO_CREATE_OP) {
+        size_t value_len = -1;
+        SV* value_sv     = *(av_fetch(op_av, 2, 0));
+        char* value      = SvOK(value_sv) ? SvPV(value_sv, value_len) : NULL;
+
         const char* path  = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
-        const char* value = SvPV_nolen(*(av_fetch(op_av, 2, 0)));
         int buffer_len    = SvIV(*(av_fetch(op_av, 3, 0)));
         const struct ACL_vector* acl =
             sv_to_acl_vector(aTHX_ *(av_fetch(op_av, 4, 0)));
@@ -210,19 +213,22 @@ zoo_op_t sv_to_op(pTHX_ SV* const op_sv) {
 
         char* buffer; Newxz(buffer, buffer_len + 1, char);
 
-        zoo_create_op_init(&op, path, value, strlen(value), acl, flags, buffer, buffer_len);
+        zoo_create_op_init(&op, path, value, value_len, acl, flags, buffer, buffer_len);
     } else if (type == ZOO_DELETE_OP) {
         const char* path = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
         int version      = SvIV(*(av_fetch(op_av, 2, 0)));
         zoo_delete_op_init(&op, path, version);
     } else if (type == ZOO_SETDATA_OP) {
+        size_t value_len = -1;
+        SV* value_sv     = *(av_fetch(op_av, 2, 0));
+        char* value      = SvOK(value_sv) ? SvPV(value_sv, value_len) : NULL;
+
         const char* path  = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
-        const char* value = SvPV_nolen(*(av_fetch(op_av, 2, 0)));
         int version       = SvIV(*(av_fetch(op_av, 3, 0)));
 
         struct Stat* stat; Newxz(stat, 1, struct Stat);
 
-        zoo_set_op_init(&op, path, value, strlen(value), version, stat);
+        zoo_set_op_init(&op, path, value, value_len, version, stat);
     } else if (type == ZOO_CHECK_OP) {
         const char* path = SvPV_nolen(*(av_fetch(op_av, 1, 0)));
         int version      = SvIV(*(av_fetch(op_av, 2, 0)));

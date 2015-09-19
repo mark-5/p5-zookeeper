@@ -115,7 +115,6 @@ sub _add_op {
 sub create {
     my ($self, $path, %extra) = @_;
     my ($value, $buffer_length, $acl) = @extra{qw(value buffer_length acl)};
-    $value         //= '';
     $buffer_length //= $self->handle->buffer_length;
     $acl           //= ZOO_OPEN_ACL_UNSAFE;
     
