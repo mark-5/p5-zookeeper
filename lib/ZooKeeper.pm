@@ -181,7 +181,7 @@ after watcher => sub {
     my @old = $self->get_watchers(%watcher_args);
     my $new = $self->create_watcher($path => $code, type => $type);
     $self->_set_watcher($new);
-    $self->remove_watcher(%watcher_args, watcher => $_) for @old;
+    $self->remove_watcher($_) for @old;
 };
 
 

@@ -1,6 +1,7 @@
 #include <pzk_dispatcher.h>
 #include <stdlib.h>
 #include <string.h>
+#include <zookeeper/zookeeper.h>
 
 void pzk_watcher_cb(
     zhandle_t*  zh,
@@ -13,7 +14,7 @@ void pzk_watcher_cb(
     pzk_dispatcher_t* dispatcher = watcher->dispatcher;
     pzk_channel_t*    channel    = dispatcher->channel;
 
-    pzk_event_t* event = new_pzk_event(type, state, path, watcher->event_ctx);
+    pzk_event_t* event = new_pzk_event(type, state, path, watcher->ctx);
     channel->push(channel, (void*) event);
 
     dispatcher->notify(dispatcher);
@@ -24,7 +25,7 @@ void pzk_auth_cb(int ret, const void* _watcher) {
     pzk_dispatcher_t* dispatcher = watcher->dispatcher;
     pzk_channel_t*    channel    = dispatcher->channel;
 
-    pzk_event_t* event = new_pzk_event(-1, ret, NULL, watcher->event_ctx);
+    pzk_event_t* event = new_pzk_event(0, ret, NULL, watcher->ctx);
     channel->push(channel, (void*) event);
 
     dispatcher->notify(dispatcher);

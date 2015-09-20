@@ -373,13 +373,13 @@ DESTROY(SV* self)
 MODULE = ZooKeeper PACKAGE = ZooKeeper::Watcher
 
 void
-_xs_init(SV* self, pzk_dispatcher_t* dispatcher, SV* cb)
+_xs_init(SV* self, pzk_dispatcher_t* dispatcher)
     PPCODE:
         if (!SvROK(self) || (SvTYPE(SvRV(self)) != SVt_PVHV)) XSRETURN_EMPTY;
 
         pzk_watcher_t* watcher; Newxz(watcher, 1, pzk_watcher_t);
         watcher->dispatcher = dispatcher;
-        watcher->event_ctx  = (void*) SvREFCNT_inc(cb);
+        watcher->ctx        = (void*) sv_rvweaken(SvREFCNT_inc(self));
         sv_magic(SvRV(self), Nullsv, PERL_MAGIC_ext, (const char*) watcher, 0);
 
 void
@@ -392,7 +392,7 @@ DESTROY(SV* self)
     PPCODE:
         pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ self);
         if (watcher) {
-            SvREFCNT_dec(watcher->event_ctx);
+            SvREFCNT_dec(watcher->ctx);
             Safefree(watcher);
         }
 

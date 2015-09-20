@@ -5,7 +5,6 @@ requires 'AnyEvent';
 requires 'Carp';
 requires 'Module::Runtime';
 requires 'Moo';
-requires 'Scalar::Util';
 requires 'Scope::Guard';
 requires 'Throwable';
 requires 'XSLoader';

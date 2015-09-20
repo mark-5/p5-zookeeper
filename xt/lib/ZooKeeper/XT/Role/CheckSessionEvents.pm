@@ -12,7 +12,7 @@ sub test_connection {
     my $zk = ZooKeeper->new(
         hosts      => test_hosts,
         dispatcher => $test->new_dispatcher,
-        watcher    => $future,
+        watcher    => sub { $future->done($_[0]) },
     );
     my $event = $future->get;
 

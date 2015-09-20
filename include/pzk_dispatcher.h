@@ -13,7 +13,7 @@ typedef void (*pzk_dispatcher_notify_fn) (struct pzk_dispatcher*);
 
 typedef struct {
     pzk_dispatcher_t* dispatcher;
-    void*             event_ctx;
+    void*             ctx;
 } pzk_watcher_t;
 
 typedef struct pzk_event {

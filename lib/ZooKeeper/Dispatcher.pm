@@ -4,7 +4,7 @@ use ZooKeeper::Channel;
 use ZooKeeper::Constants qw(ZOO_SESSION_EVENT);
 use ZooKeeper::Watcher;
 use AnyEvent;
-use Scalar::Util qw(blessed weaken);
+use Scalar::Util qw(weaken);
 use Scope::Guard qw(guard);
 use Moo;
 use namespace::autoclean;
@@ -91,49 +91,23 @@ Create a new ZooKeeper::Watcher. This is the preferred way to instantiate watche
 
 sub create_watcher {
     my ($self, $path, $cb, %args) = @_;
-    my $type = $args{type};
-    my $default_watch = $type eq "default";
-    my $auth_watch    = $type eq "add_auth";
 
-    if (blessed($cb) and $cb->isa('Future')) {
-        my $future = $cb;
-        $cb = sub { $future->done(shift) };
-    }
-
-    my $watcher;
-    my $wrapped = sub {
-        my ($event) = @_;
-        my $sess_event = $event->{type} == ZOO_SESSION_EVENT;
-        if ($self->ignore_session_events) {
-            return if $sess_event and not $default_watch and not $auth_watch;
-        }
-        if (not $default_watch and not($auth_watch or $sess_event)) {
-            # don't remove default watchers
-            # and don't remove normal watchers on session events
-            $self->remove_watcher(
-                path    => $path,
-                type    => $type,
-                watcher => $watcher,
-            );
-        }
-        goto &$cb;
-    };
-
-    $watcher = ZooKeeper::Watcher->new(dispatcher => $self, cb => $wrapped);
-    $self->_add_watcher(
-        path    => $path,
-        type    => $type,
-        watcher => $watcher,
+    my $watcher = ZooKeeper::Watcher->new(
+        dispatcher => $self,
+        cb         => $cb,
+        path       => $path,
+        type       => $args{type},
+        ignore_session_events => $self->ignore_session_events,
     );
+    $self->_add_watcher($watcher);
 
-    weaken($self);
-    weaken($watcher);
     return $watcher;
 }
 
 sub _add_watcher {
-    my ($self, %args) = @_;
-    my ($path, $type, $watcher) = @args{qw(path type watcher)};
+    my ($self, $watcher) = @_;
+    my $path = $watcher->path;
+    my $type = $watcher->type;
     $self->watchers->{$path}{$type}{$watcher} = $watcher;
 }
 
@@ -144,8 +118,9 @@ sub get_watchers {
 }
 
 sub remove_watcher {
-    my ($self, %args) = @_;
-    my ($path, $type, $watcher) = @args{qw(path type watcher)};
+    my ($self, $watcher) = @_;
+    my $path = $watcher->path;
+    my $type = $watcher->type;
     delete $self->watchers->{$path}{$type}{$watcher};
 
     delete $self->watchers->{$path}{$type}
@@ -163,8 +138,9 @@ Read an event from the channel, and execute the corresponding watcher callback.
 sub dispatch_event {
     my ($self) = @_;
     if (my $event = $self->recv_event) {
-        my $cb = delete $event->{cb};
-        $cb->($event);
+        my $watcher = delete $event->{watcher};
+        $watcher->process($event);
+        $self->remove_watcher($watcher) if $watcher->done;
         return $event;
     } else {
         return undef;

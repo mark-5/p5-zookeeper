@@ -31,7 +31,7 @@ sub test_acls {
     my $authenticated = $test->new_future;
     $zk->add_auth(
         digest  => "$user:$pass",
-        watcher => $authenticated,
+        watcher => sub { $authenticated->done($_[0]) },
     );
     $authenticated->get;
 
@@ -52,7 +52,7 @@ sub test_acls {
     $authenticated = $test->new_future;
     $bad_zk->add_auth(
         digest  => "different:credentials",
-        watcher => $authenticated,
+        watcher => sub { $authenticated->done($_[0]) },
     );
     $authenticated->get;
 
