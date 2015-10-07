@@ -1,3 +1,10 @@
+0.1.7 - 2015-10-6
+  - add support for reopening connection after forking
+  - add unstable status description
+  - add ensure_path implementation
+  - add support for setting default acl
+  - throw exception if transactions fail because of connection issues
+
 0.1.6 - 2015-9-18
   - fix handling of node data with null bytes (#2)
 
