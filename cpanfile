@@ -15,6 +15,10 @@ feature 'async-interrupt', 'Async::Interrupt support' => sub {
 feature 'io-async', 'IO::Async support' => sub {
     recommends 'IO::Async::Handle';
 };
+feature 'mojo', 'Mojolicious support' => sub {
+    recommends 'Mojolicious';
+    recommends 'Future::Mojo';
+};
 feature 'poe', 'POE support' => sub {
     recommends 'POE';
     recommends 'POE::Future';
@@ -24,11 +28,13 @@ author_requires 'Async::Interrupt';
 author_requires 'Devel::CheckLib';
 author_requires 'Digest::SHA';
 author_requires 'FindBin::libs';
+author_requires 'Future::Mojo';
 author_requires 'IO::Async::Handle';
 author_requires 'Module::Install::AuthorTests';
 author_requires 'Module::Install::CPANfile';
 author_requires 'Module::Install::ReadmePodFromPod';
 author_requires 'Module::Install::XSUtil';
+author_requires 'Mojolicious';
 author_requires 'POE';
 author_requires 'POE::Future';
 author_requires 'Test::Fatal';

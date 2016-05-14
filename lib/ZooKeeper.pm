@@ -126,6 +126,10 @@ The IO::Async dispatcher requires an IO::Async::Loop, and needs to be constructe
         dispatcher => $disp,
     );
 
+=item Mojo
+
+ZooKeeper writes to a Unix pipe with an attached Mojo::Reactor watcher.
+
 =item POE
 
 ZooKeeper writes to a Unix pipe with an attached POE::Session.
@@ -234,6 +238,8 @@ Valid types include:
 =item AnyEvent
 
 =item Interrupt
+
+=item Mojo
 
 =item POE
 
