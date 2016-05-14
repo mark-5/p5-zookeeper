@@ -78,10 +78,11 @@ sub BUILD {
     $self->loop->add($self->notifier);
 }
 
-sub DEMOLISH {}
-before DEMOLISH => sub {
-    my ($self) = @_;
+sub DEMOLISH {
+    my ($self, $in_global_destruction) = @_;
+    return if $in_global_destruction;
+
     $self->loop->remove($self->notifier);
-};
+}
 
 1;

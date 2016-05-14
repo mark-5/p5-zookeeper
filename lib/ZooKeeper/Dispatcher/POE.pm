@@ -81,9 +81,10 @@ sub BUILD {
     $self->set_session($session);
 }
 
-sub DEMOLISH {}
-before DEMOLISH => sub {
-    my ($self) = @_;
+sub DEMOLISH {
+    my ($self, $in_global_destruction) = @_;
+    return if $in_global_destruction;
+
     POE::Kernel->call($self->session, 'shutdown');
     $self->clear_session;
 };
