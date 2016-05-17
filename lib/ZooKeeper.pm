@@ -8,7 +8,7 @@ use Moo;
 use namespace::autoclean;
 use 5.10.1;
 
-our $VERSION = '0.1.7';
+our $VERSION = '0.1.8';
 
 BEGIN {
     if (my $trace_var = $ENV{PERL_ZOOKEEPER_TRACE}) {
