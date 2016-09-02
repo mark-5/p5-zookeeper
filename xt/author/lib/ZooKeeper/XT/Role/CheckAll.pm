@@ -11,4 +11,12 @@ with qw(
     ZooKeeper::XT::Role::CheckTransactions
 );
 
+around test_startup => sub {
+    my ($orig, $test, @args) = @_;
+    if ($ENV{CI}) {
+        $test->test_skip('TODO: figure out how to run travis-ci with service dependencies');
+    }
+    return $test->$orig(@args);
+};
+
 1;

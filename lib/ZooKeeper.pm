@@ -21,6 +21,8 @@ BEGIN {
 
 ZooKeeper - Perl bindings for Apache ZooKeeper
 
+=for html <a href="https://travis-ci.org/mark-5/p5-zookeeper"><img src="https://travis-ci.org/mark-5/p5-zookeeper.svg?branch=master"></a>
+
 =head1 SYNOPSIS
 
     my $zk = ZooKeeper->new(hosts => 'localhost:2181');
