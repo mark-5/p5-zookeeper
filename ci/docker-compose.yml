@@ -1,0 +1,18 @@
+---
+code:
+  build: ..
+  dockerfile: ci/Dockerfile
+  command: /bin/true
+  environment:
+    CI: 'true'
+    ZOOKEEPER_TEST_HOSTS: zookeeper:2181
+  links:
+    - zookeeper
+
+zookeeper:
+  build: ..
+  dockerfile: ci/Dockerfile
+  command: /opt/zookeeper/bin/zkServer.sh start-foreground
+  ports:
+    - "2181"
+

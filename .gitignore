@@ -1,3 +1,4 @@
 .carmel
+ci/Dockerfile
 cpanfile.snapshot
 local
