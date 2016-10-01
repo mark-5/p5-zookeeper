@@ -17,7 +17,7 @@ cc_include_paths 'include';
 cc_libs '-lzookeeper_mt', '-lpthread';
 cc_src_paths 'src';
 
-author_tests('xt');
+extra_tests;
 
 makemaker_args(
     META_MERGE   => {

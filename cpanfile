@@ -28,7 +28,7 @@ on test => sub {
 on develop => sub {
     requires 'Digest::SHA';
     requires 'FindBin::libs';
-    requires 'Module::Install::AuthorTests';
+    requires 'Module::Install::ExtraTests';
     requires 'Module::Install::ReadmePodFromPod';
     requires 'Module::Install::XSUtil';
     requires 'Test::Fatal';
