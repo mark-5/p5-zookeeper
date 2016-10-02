@@ -1,6 +1,5 @@
 on $_ => sub {
     requires 'Devel::CheckLib';
-    requires 'Module::CPANfile';
 } for qw(configure build);
 # these are configure deps, but cpanm has a hard time picking them up
 
@@ -28,6 +27,7 @@ on test => sub {
 on develop => sub {
     requires 'Digest::SHA';
     requires 'FindBin::libs';
+    requires 'Module::Install::CPANfile';
     requires 'Module::Install::ExtraTests';
     requires 'Module::Install::ReadmePodFromPod';
     requires 'Module::Install::XSUtil';

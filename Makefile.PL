@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 use inc::Module::Install;
-use Module::CPANfile;
 
 all_from 'lib/ZooKeeper.pm';
 readme_pod_from 'lib/ZooKeeper.pm';
@@ -19,12 +18,7 @@ cc_src_paths 'src';
 
 extra_tests;
 
-makemaker_args(
-    META_MERGE   => {
-        'meta-spec' => { version => 2 },
-        'prereqs'   => Module::CPANfile->load('cpanfile')->prereq_specs,
-    },
-);
+cpanfile;
 
 clean_files 'META.*';
 WriteAll;
