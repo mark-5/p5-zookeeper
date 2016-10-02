@@ -1,5 +1,6 @@
 \.o
 .carmel
+cpanfile.snapshot
 local
 
 #!include_default
