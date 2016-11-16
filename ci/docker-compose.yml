@@ -4,7 +4,7 @@ code:
   dockerfile: ci/Dockerfile
   command: /bin/true
   environment:
-    CI: 'true'
+    PERL_MM_USE_DEFAULT: 1
     ZOOKEEPER_TEST_HOSTS: zookeeper:2181
   links:
     - zookeeper
