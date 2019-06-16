@@ -35,6 +35,8 @@ sub test_acls {
     );
     $authenticated->get;
 
+    use Data::Dumper; $Data::Dumper::Sortkeys++; warn Dumper [ $zk->get_config() ];
+
     my $data = sprintf("test data %s", scalar rand);
     my $node = $zk->create("/_perl_zk_test-",
         acl => [{
