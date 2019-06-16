@@ -167,6 +167,30 @@ get_children(pzk_t* pzk, char* path, SV* _watcher=NULL)
         }
 
 void
+get_config(pzk_t* pzk, int buffer_len, SV* _watcher=NULL)
+    PPCODE:
+        int rc;
+        char* buffer; Newxz(buffer, buffer_len + 1, char);
+        struct Stat stat; Zero(&stat, 1, struct Stat);
+        pzk_watcher_t* watcher = (pzk_watcher_t*) unsafe_tied_object_to_ptr(aTHX_ _watcher);
+        if (watcher) {
+            rc = zoo_wgetconfig(pzk->handle, pzk_watcher_cb, watcher, buffer, &buffer_len, &stat);
+        } else {
+            rc = zoo_wgetconfig(pzk->handle, 0, buffer, &buffer_len, &stat);
+        }
+
+        if (rc != ZOK) throw_zerror(aTHX_ rc, "Error getting config: %s", zerror(rc));
+
+        ST(0) = buffer_len == -1 ? &PL_sv_undef : newSVpv(buffer, buffer_len);
+        Safefree(buffer);
+        if (GIMME_V == G_ARRAY) {
+            ST(1) = sv_2mortal(stat_to_sv(aTHX_ &stat));
+            XSRETURN(2);
+        } else {
+            XSRETURN(1);
+        }
+
+void
 get(pzk_t* pzk, char* path, int buffer_len, SV* _watcher=NULL)
     PPCODE:
         int rc;

@@ -500,6 +500,29 @@ around get_children => sub {
     return $self->$orig($path, $watcher);
 };
 
+=head2 get_config
+
+Retrieve the last committed configuration of the ZooKeeper cluster as it is known to the server to which the client is connected.
+In list context, the configuration and stat hashref of the node is returned. Otherwise just the configuration is returned.
+
+    my $conf          = $zk->get_config(%extra)
+    my ($conf, $stat) = $zk->get_config(%extra)
+
+        OPTIONAL %extra
+            watcher
+            buffer_length
+
+=cut
+
+around get_config => sub {
+    my ($orig, $self, %extra) = @_;
+    my $watcher = $extra{watcher} ? $self->create_watcher('', $extra{watcher}, type => 'get_config') : undef;
+    return $self->$orig(
+        $extra{buffer_length} // $self->buffer_length,
+        $watcher,
+    );
+};
+
 =head2 get
 
 Retrieve data stored at the given path. Optionally set a watcher for when the data is changed.
