@@ -10,9 +10,7 @@ code:
     - zookeeper
 
 zookeeper:
-  build: ..
-  dockerfile: ci/Dockerfile
-  command: /opt/zookeeper/bin/zkServer.sh start-foreground
+  image: zookeeper:$ZOOKEEPER_VERSION
   ports:
     - "2181"
 
